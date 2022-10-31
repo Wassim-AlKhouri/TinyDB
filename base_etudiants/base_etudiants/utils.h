@@ -6,6 +6,7 @@
 
 #include "query.h"
 
+
 /**
  * @brief Effectue un `read` en vérifiant la valeur de retour.
  * Si la valeur de retour est négative, la fonction affiche l'erreur et termine
@@ -29,6 +30,10 @@ size_t safe_read(int fd, void *buffer, size_t nbytes);
  * @return size_t le nombre de bytes écrits
  */
 size_t safe_write(int fd, const void *buffer, size_t nbytes);
+/**
+ * closes a pipe safely
+ */
+void safe_close(fd);
 
 /**
  * @brief the result of a query.

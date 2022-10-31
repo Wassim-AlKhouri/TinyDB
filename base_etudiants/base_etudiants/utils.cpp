@@ -23,6 +23,15 @@ size_t safe_write(int fd, const void* buffer, size_t nbytes) {
   return (size_t)bytes_written;
 }
 
+
+void safe_close(fd){
+	int status = close(fd) 
+	if(status < 0){
+		perror("close;")
+	}
+}
+
+
 void log_query(query_result_t* result) {
   char buffer[512];
   if (result->status == QUERY_SUCCESS) {
