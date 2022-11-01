@@ -40,7 +40,7 @@ void db_load(database_t *db, const char *path) {
 }
 
 void db_init(database_t *db) {
-	//db->data = create_shared_memory(DATASIZE * sizeof(student_t));
+	db->data = (student_t*)create_shared_memory(DATASIZE * sizeof(student_t));
 	db->lsize = 0;
 	db->psize = 0;
 }

@@ -10,14 +10,6 @@ int main(){
 		char section[64];    /** Section **/
 		struct tm birthdate; /** Birth date **/
 	} student_t;
-	student_t* s[10];
-	student_t chao;
-	student_t ca;
-	student_t c;
-	s[0] = chao;
-	s[1] = ca;
-	s[2] = c;
-	s.remove(chao);
 }
 /**
  * 	char champ[64];
