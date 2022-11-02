@@ -1,17 +1,16 @@
 #include <stdio.h>
 #include <unistd.h>
-#include <string.h>
+#include <string>
 #include "db.h"
 #include "query.h"
 #include "utils.h"
 #include "student.h"
 #include "parsing.h"
-
 #define WRITE 1
 #define READ 0
 
 
-void select(int* fd_s){
+void select(int* fd_s,database_t* db){
 	safe_close(fd_s[WRITE]);
 	query_result_t result; 
 	int success = 0;
@@ -40,13 +39,13 @@ void select(int* fd_s){
 		}
 		if(success){
 			result.status = QUERY_SUCCESS;
-			log_query(result);
+			log_query(&result);
 		}
 	}
 }
 
 
-void insert(int* fd_i){
+void insert(int* fd_i,database_t* db){
 	safe_close(fd_i[WRITE]);
 	query_result_t result; 
 	int success = 0;
@@ -69,12 +68,12 @@ void insert(int* fd_i){
 	}
 	if(success){
 		result.status = QUERY_SUCCESS;
-		log_query(result);
+		log_query(&result);
 	}
 }
 
 
-void del(int* fd_d){
+void del(int* fd_d,database_t* db){
 	safe_close(fd_d[WRITE]);	
 	query_result_t result; 
 	safe_read(fd_d[READ],&result,sizeof(query_result_t));
@@ -103,13 +102,13 @@ void del(int* fd_d){
 		}
 		if(success){
 			result.status = QUERY_SUCCESS;
-			log_query(result);
+			log_query(&result);
 		}
 	}
 }
 
 
-void update(int* fd_u){
+void update(int* fd_u,database_t* db){
 	safe_close(fd_u[WRITE]);
 	query_result_t result; 
 	int success = 0;
@@ -119,7 +118,7 @@ void update(int* fd_u){
 	char* field_to_update;
 	char* update_value;
 	if(parse_update(result.query,field_filter,value_filter,field_to_update,update_value)){
-			printf("wrong type of query")
+			printf("wrong type of query");
 	}else{
 		for(int i=0;i>=db->lsize;i++){
 			if(!strcmp(field_filter,"fname") && update_value==db->data[i].fname){
@@ -182,17 +181,19 @@ void update(int* fd_u){
 					printf("wrong type of query");
 					success = 1;
 				}
-			}else if(!strcmp(field_filter,"section") && value_filter==db->data[i].section){
+			}else if(!strcmp(field_filter,"section") && value_filter==db->data[i].section){ // example a suivre
 				if(!strcmp(field_to_update,"fname")){
-					db->data[i].fname = update_value;
+					strcpy(db->data[i].fname , update_value);
 				}else if(!strcmp(field_to_update,"lname")){
-					db->data[i].lname = update_value;
+					strcpy(db->data[i].lname , update_value);
 				}else if(!strcmp(field_to_update,"id")){
-					db->data[i].id = update_value;
+					db->data[i].id = std::stoul(update_value);
 				}else if(!strcmp(field_to_update,"birthdate")){
-					db->data[i].birthdate = update_value;
+					char buff[sizeof(struct tm)];
+					strftime(buff,sizeof(struct tm);
+					strcpy(db->data[i].birthdate , update_value);
 				}else if(!strcmp(field_to_update,"section")){
-					db->data[i].section = update_value;
+					strcpy(db->data[i].section ,update_value);
 				}else {
 					printf("wrong type of query");
 					success = 1;
@@ -204,7 +205,7 @@ void update(int* fd_u){
 		}
 		if(success){
 			result.status = QUERY_SUCCESS;
-			log_query(result);
+			log_query(&result);
 		}
 	}
 }
@@ -229,30 +230,30 @@ int main(int argc, char const *argv[]) {
 	int pipe (int fd_u[2]);
 	safe_close(fd_u[READ]);
 	if (fork()==0){
-		//fils 1;select 
+		//fils 1; select 
 		pids[0] = getpid();
-		select(fd_s);
+		select(fd_s,&db);
 	}
 	else {
 		if(fork()==0){
 			//fils 2; insert
 			
 			pids[1] = getpid();
-			insert(fd_i);
+			insert(fd_i,&db);
 		}
 		else{
 			if(fork()==0){
 				//fils 3; delete
 				
 				pids[2] = getpid();
-				del(fd_d);
+				del(fd_d,&db);
 			}
 			else{
 				if(fork()==0){
 					//fils 4; update
 					
 					pids[3] = getpid();
-					update(fd_u);
+					update(fd_u,&db);
 				}
 			}
 		}

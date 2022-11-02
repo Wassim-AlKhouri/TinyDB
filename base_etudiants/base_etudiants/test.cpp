@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include <string.h>
+#include <string> 
+#include <time.h>
 int main(){
-	char champ[64]="stop";
+	char champ[64]="10";
 	char valeur[30]="sto";
-	typedef struct {
-		unsigned id;         /** Unique ID **/
-		char fname[64];      /** Firstname **/
-		char lname[64];      /** Lastname **/
-		char section[64];    /** Section **/
-		struct tm birthdate; /** Birth date **/
-	} student_t;
+	int i= 10;
+	struct tm start = {.tm_year=2022-1900, .tm_mday=1};
+    mktime(&start);
+    printf("%s", asctime(&start));
 }
 /**
  * 	char champ[64];

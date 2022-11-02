@@ -33,7 +33,7 @@ size_t safe_write(int fd, const void *buffer, size_t nbytes);
 /**
  * closes a pipe safely
  */
-void safe_close(fd);
+void safe_close(int fd);
 
 /**
  * @brief the result of a query.

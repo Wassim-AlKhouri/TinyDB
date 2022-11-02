@@ -25,9 +25,9 @@ size_t safe_write(int fd, const void* buffer, size_t nbytes) {
 
 
 void safe_close(fd){
-	int status = close(fd) 
+	int status = close(fd);
 	if(status < 0){
-		perror("close;")
+		perror("close:");
 	}
 }
 
