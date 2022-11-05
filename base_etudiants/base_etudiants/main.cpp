@@ -224,7 +224,7 @@ int main(int argc, char const *argv[]) {
 	database_t db;
 	db_init(&db);
 	db_load(&db, db_path);
-	pid_t pids[4];
+	pid_t pids[5];
 	int fd_s[2];
 	int fd_i[2];
 	int fd_d[2];
@@ -238,56 +238,75 @@ int main(int argc, char const *argv[]) {
 	int pipe (int fd_u[2]);
 	safe_close(fd_u[READ]);
 	if (fork()==0){
-		//fils 1; select 
-		pids[0] = getpid();
-		select(fd_s,&db);
+		//fils 1
+		pids[1] = getpid();
 	}
 	else {
 		if(fork()==0){
-			//fils 2; insert
-			
-			pids[1] = getpid();
-			insert(fd_i,&db);
+			//fils 2
+			pids[2] = getpid();
 		}
 		else{
 			if(fork()==0){
-				//fils 3; delete
-				
-				pids[2] = getpid();
-				del(fd_d,&db);
+				//fils 3
+				pids[3] = getpid();
 			}
 			else{
 				if(fork()==0){
-					//fils 4; update
-					
-					pids[3] = getpid();
-					update(fd_u,&db);
+					//fils 4
+					pids[4] = getpid();
 				}
 			}
 		}
 	}
-	while(1){
-		char query[256];
-		query_result_t result;
-		char query_type[6];
-		int i = 0;
-		scanf("%[^\t\n]",query);
-		while(query[i] != ' '){i++;}
-		strncpy(query_type, query, i);
-		query_result_init(&result,query);
-		if(!strcmp(query_type,"select")){
-            safe_write(fd_s[WRITE],&result,sizeof(query_result_t));
-        }else if(!strcmp(query_type,"insert")){
-            safe_write(fd_i[WRITE],&result,sizeof(query_result_t));
-        }else if(!strcmp(query_type,"delete")){
-            safe_write(fd_d[WRITE],&result,sizeof(query_result_t));
-        }else if(!strcmp(query_type,"update")){
-            safe_write(fd_u[WRITE],&result,sizeof(query_result_t));
-        }else{
-            printf("demande mal formée");
-        }
+	pid_t pid = getpid();
+	if(pid == pids[0]){
+		// processus père
+		while(1){
+			char query[256];
+			query_result_t result;
+			char query_type[6];
+			int i = 0;
+			scanf("%[^\t\n]",query);
+			while(query[i] != ' '){i++;}
+			strncpy(query_type, query, i);
+			query_result_init(&result,query);
+			if(!strcmp(query_type,"select")){
+				safe_write(fd_s[WRITE],&result,sizeof(query_result_t));
+			}else if(!strcmp(query_type,"insert")){
+				safe_write(fd_i[WRITE],&result,sizeof(query_result_t));
+			}else if(!strcmp(query_type,"delete")){
+				safe_write(fd_d[WRITE],&result,sizeof(query_result_t));
+			}else if(!strcmp(query_type,"update")){
+				safe_write(fd_u[WRITE],&result,sizeof(query_result_t));
+			}else{
+				printf("demande mal formée");
+			}
+		}
+		db_save(&db, db_path);
+		printf("Bye bye!\n");
+		return 0;
+	}else if(pid == pids[1]){
+		// fprocessus fils: select
+		while(1){
+			select(fd_s, &db);
+		}
+		
+	}else if(pid == pids[2]){
+		// fprocessus fils: insert
+		while(1){
+			insert(fd_i, &db);
+		}
+	}else if(pid == pids[3]){
+		// fprocessus fils: delete
+		while(1){
+			del(fd_d, &db);
+		}
+		
+	}else if(pid == pids[4]){
+		// fprocessus fils: update
+		while(1){
+			update(fd_u, &db);
+		}
 	}
-	db_save(&db, db_path);
-	printf("Bye bye!\n");
-	return 0;
 }
