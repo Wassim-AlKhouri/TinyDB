@@ -1,14 +1,67 @@
 #include <stdio.h>
 #include <string.h>
 #include <string> 
+#include <sstream>
 #include <time.h>
+#include <iostream>
+bool parse_birthdate(char* date, struct tm* birthdate){
+	printf("avant datecopy\n");
+	char *datecopy;
+	strcpy(datecopy,date);
+	int itoken;
+	printf("dnas la fonction\n");
+	char* token = strtok_r(datecopy,"/",&datecopy);
+	printf("%s\n",token);
+	if (token == NULL) {
+        return false;
+    }
+	sscanf(token, "%d", &itoken);
+    birthdate->tm_mday = itoken;
+    token = strtok_r(datecopy,"/",&datecopy);
+    printf("%s\n",token);
+    if (token == NULL) {
+        return false;
+    }
+	sscanf(token, "%d", &itoken);
+	birthdate->tm_mon = itoken;
+    token = strtok_r(datecopy,"/",&datecopy);
+    printf("%s\n",token);
+	if (token == NULL) {
+        return false;
+    }
+	sscanf(token, "%d", &itoken);
+    birthdate->tm_year = itoken;
+    return true;
+}
 int main(){
-	char champ[64]="10";
+	char* champ;
 	char valeur[30]="sto";
-	int i= 10;
-	struct tm start = {.tm_year=2022-1900, .tm_mday=1};
-    mktime(&start);
-    printf("%s", asctime(&start));
+	//unsigned b = 10258;
+	//stringstream strb;
+	//strb << champ;
+	//strtoul(vIn,NULL,10);
+	//unsigned int strb = (unsigned int *)strtoull(champ, NULL, 0
+	/*
+	unsigned int strb;
+	sscanf(champ, "%d", &strb);
+	if(b == strb){
+		printf("c bon\n");
+	}
+	*/
+	scanf("%s", champ);
+	struct tm birthdate;
+	parse_birthdate(champ,&birthdate);
+	struct tm b = {.tm_mday = 1, .tm_mon = 5, .tm_year = 2000};
+	/*
+	if(b.tm_mday == birthdate.tm_mday && b.tm_mon == birthdate.tm_mon && b.tm_year == birthdate.tm_year){
+		printf("c bon\n");
+	}
+	*/
+	time_t tb = mktime(&b);
+	time_t tbirthdate = mktime(&birthdate);
+	if( difftime(tbirthdate,tb) == 0){
+		printf("c bon\n");
+	} 
 }
 /**
  * 	char champ[64];

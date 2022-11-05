@@ -73,3 +73,26 @@ bool parse_selectors(char* query, char* field, char* value) {
     strcpy(value, token);
     return true;
 }
+
+bool parse_birthdate(char* date, struct tm* birthdate){
+	int itoken;
+	char* token = strtok_r(NULL,"/",&date);
+	if (token == NULL) {
+        return false;
+    }
+	sscanf(token, "%d", &itoken);
+    birthdate->tm_mday = itoken;
+    token = strtok_r(NULL,"/",&date);
+    if (token == NULL) {
+        return false;
+    }
+	sscanf(token, "%d", &itoken);
+	birthdate->tm_mon = itoken-1;
+    token = strtok_r(NULL,"/",&date);
+	if (token == NULL) {
+        return false;
+    }
+	sscanf(token, "%d", &itoken);
+    birthdate->tm_year = itoken+1900;
+    return true,
+}

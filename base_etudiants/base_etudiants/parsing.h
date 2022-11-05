@@ -38,4 +38,6 @@ bool parse_insert(char* query_arguments, char* fname, char* lname, unsigned* id,
  **/
 bool parse_selectors(char* query, char* field, char* value);
 
+bool parse_birthdate(char* date, struct tm* birthdate);
+
 #endif
