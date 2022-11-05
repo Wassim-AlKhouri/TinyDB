@@ -123,60 +123,68 @@ void update(int* fd_u,database_t* db){
 		for(int i=0;i>=db->lsize;i++){
 			if(!strcmp(field_filter,"fname") && update_value==db->data[i].fname){
 				if(!strcmp(field_to_update,"fname")){
-					db->data[i].fname = update_value;
+					strcpy(db->data[i].fname , update_value);
 				}else if(!strcmp(field_to_update,"lname")){
-					db->data[i].lname = update_value;
+					strcpy(db->data[i].lname , update_value);
 				}else if(!strcmp(field_to_update,"id")){
-					db->data[i].id = update_value;
+					db->data[i].id = std::stoul(update_value);
 				}else if(!strcmp(field_to_update,"birthdate")){
-					db->data[i].birthdate = update_value;
+					char buff[sizeof(struct tm)];
+					strftime(buff,sizeof(struct tm);
+					strcpy(db->data[i].birthdate , update_value);
 				}else if(!strcmp(field_to_update,"section")){
-					db->data[i].section = update_value;
+					strcpy(db->data[i].section ,update_value);
 				}else {
 					printf("wrong type of query");
 					success = 1;
 				}
 			}else if(!strcmp(field_filter,"lname") && value_filter==db->data[i].lname){
 				if(!strcmp(field_to_update,"fname")){
-					db->data[i].fname = update_value;
+					strcpy(db->data[i].fname , update_value);
 				}else if(!strcmp(field_to_update,"lname")){
-					db->data[i].lname = update_value;
+					strcpy(db->data[i].lname , update_value);
 				}else if(!strcmp(field_to_update,"id")){
-					db->data[i].id = update_value;
+					db->data[i].id = std::stoul(update_value);
 				}else if(!strcmp(field_to_update,"birthdate")){
-					db->data[i].birthdate = update_value;
+					char buff[sizeof(struct tm)];
+					strftime(buff,sizeof(struct tm);
+					strcpy(db->data[i].birthdate , update_value);
 				}else if(!strcmp(field_to_update,"section")){
-					db->data[i].section = update_value;
+					strcpy(db->data[i].section ,update_value);
 				}else {
 					printf("wrong type of query");
 					success = 1;
 				}
 			}else if(!strcmp(field_filter,"id") && value_filter==db->data[i].id){
 				if(!strcmp(field_to_update,"fname")){
-					db->data[i].fname = update_value;
+					strcpy(db->data[i].fname , update_value);
 				}else if(!strcmp(field_to_update,"lname")){
-					db->data[i].lname = update_value;
+					strcpy(db->data[i].lname , update_value);
 				}else if(!strcmp(field_to_update,"id")){
-					db->data[i].id = update_value;
+					db->data[i].id = std::stoul(update_value);
 				}else if(!strcmp(field_to_update,"birthdate")){
-					db->data[i].birthdate = update_value;
+					char buff[sizeof(struct tm)];
+					strftime(buff,sizeof(struct tm);
+					strcpy(db->data[i].birthdate , update_value);
 				}else if(!strcmp(field_to_update,"section")){
-					db->data[i].section = update_value;
+					strcpy(db->data[i].section ,update_value);
 				}else {
 					printf("wrong type of query");
 					success = 1;
 				}
 			}else if(!strcmp(field_filter,"birthdate") && value_filter==db->data[i].birthdate){
 				if(!strcmp(field_to_update,"fname")){
-					db->data[i].fname = update_value;
+					strcpy(db->data[i].fname , update_value);
 				}else if(!strcmp(field_to_update,"lname")){
-					db->data[i].lname = update_value;
+					strcpy(db->data[i].lname , update_value);
 				}else if(!strcmp(field_to_update,"id")){
-					db->data[i].id = update_value;
+					db->data[i].id = std::stoul(update_value);
 				}else if(!strcmp(field_to_update,"birthdate")){
-					db->data[i].birthdate = update_value;
+					char buff[sizeof(struct tm)];
+					strftime(buff,sizeof(struct tm);
+					strcpy(db->data[i].birthdate , update_value);
 				}else if(!strcmp(field_to_update,"section")){
-					db->data[i].section = update_value;
+					strcpy(db->data[i].section ,update_value);
 				}else {
 					printf("wrong type of query");
 					success = 1;
