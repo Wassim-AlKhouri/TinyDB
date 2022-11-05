@@ -5,32 +5,36 @@
 #include <time.h>
 #include <iostream>
 bool parse_birthdate(char* date, struct tm* birthdate){
-	printf("avant datecopy\n");
-	char *datecopy;
-	strcpy(datecopy,date);
+	/*
 	int itoken;
+	char* datacopy = strdup(date);
 	printf("dnas la fonction\n");
-	char* token = strtok_r(datecopy,"/",&datecopy);
+	char* token = strtok_r(datacopy,"/",&datacopy);
 	printf("%s\n",token);
 	if (token == NULL) {
         return false;
     }
 	sscanf(token, "%d", &itoken);
     birthdate->tm_mday = itoken;
-    token = strtok_r(datecopy,"/",&datecopy);
+    token = strtok_r(datacopy,"/",&datacopy);
     printf("%s\n",token);
     if (token == NULL) {
         return false;
     }
 	sscanf(token, "%d", &itoken);
 	birthdate->tm_mon = itoken;
-    token = strtok_r(datecopy,"/",&datecopy);
+    token = strtok_r(datacopy,"/",&datacopy);
     printf("%s\n",token);
 	if (token == NULL) {
         return false;
     }
 	sscanf(token, "%d", &itoken);
     birthdate->tm_year = itoken;
+    free(datacopy);
+    */
+    if (strptime(date, "%d/%m/%Y", birthdate) == NULL) {
+        return false;
+    } 
     return true;
 }
 int main(){

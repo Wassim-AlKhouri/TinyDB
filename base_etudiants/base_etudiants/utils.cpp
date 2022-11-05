@@ -1,7 +1,7 @@
-#include "utils.h"
-
 #include <unistd.h>
+#include <sys/mman.h>
 
+#include "utils.h"
 #include "query.h"
 #include "student.h"
 
@@ -24,7 +24,7 @@ size_t safe_write(int fd, const void* buffer, size_t nbytes) {
 }
 
 
-void safe_close(fd){
+void safe_close(int fd){
 	int status = close(fd);
 	if(status < 0){
 		perror("close:");
@@ -46,7 +46,7 @@ void log_query(query_result_t* result) {
     sprintf(buffer, "Query \"%s\" completed in %fms with %ld results.\n", result->query, duration, result->lsize);
     fwrite(buffer, sizeof(char), strlen(buffer), f);
     if (result->lsize > 0) {
-      for (int i = 0; i < result->lsize; i++) {
+      for (int i = 0; i < (int)result->lsize; i++) {
         student_to_str(buffer, &result->students[i]);
         fwrite(buffer, sizeof(char), strlen(buffer), f);
         fwrite("\n", sizeof(char), 1, f);
@@ -56,4 +56,10 @@ void log_query(query_result_t* result) {
   } else if (result->status == UNRECOGNISED_FIELD) {
     fprintf(stderr, "Unrecognized field in query %s\n", result->query);
   }
+}
+
+void* create_shared_memory(size_t size) {
+  const int protection = PROT_READ | PROT_WRITE;
+  const int visibility = MAP_SHARED | MAP_ANONYMOUS;
+  return mmap(NULL, size, protection, visibility, -1, 0);
 }

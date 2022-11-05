@@ -11,15 +11,15 @@ typedef struct {
   size_t lsize;    /** The logical size of the list **/
   size_t psize;    /** The physical size of the list **/
 } database_t;
-/**
- * creats an mmap
- **/
-void* create_shared_memory(size_t size);
+
 /**
  *  Add a student to the database.
  **/
 void db_add(database_t *db, student_t s);
-
+/**
+ *  Remove the student number i in the list from the database.
+ **/
+void db_remove(database_t *db, int i);
 /**
  * Save the content of a database_t in the specified file.
  **/

@@ -39,5 +39,9 @@ void safe_close(int fd);
  * @brief the result of a query.
  **/
 void log_query(query_result_t *result);
+/**
+ * creats an mmap
+ **/
+void* create_shared_memory(size_t size);
 
 #endif  // _UTILS_H

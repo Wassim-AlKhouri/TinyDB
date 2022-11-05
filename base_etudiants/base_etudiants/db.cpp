@@ -1,17 +1,11 @@
 #include "db.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <sys/mman.h>
 #include "student.h"
 #define DATASIZE 100000
-
-void* create_shared_memory(size_t size) {
-  const int protection = PROT_READ | PROT_WRITE;
-  const int visibility = MAP_SHARED | MAP_ANONYMOUS;
-  return mmap(NULL, size, protection, visibility, -1, 0);
-}
-
 
 void db_save(database_t *db, const char *path) {
     FILE *f = fopen(path, "wb");
@@ -49,4 +43,11 @@ void db_add(database_t *db, student_t student) {
   db->data[db->lsize] = student;
   db->lsize = db->lsize + 1;
   db->psize = db->psize + sizeof(student_t);
+}
+
+void db_remove(database_t *db, int i){
+	for(int j=i+1; j<=(int)db->lsize; j++){
+		db->data[j-1] = db->data[j];
+	}
+	db->lsize = db->lsize -1;
 }

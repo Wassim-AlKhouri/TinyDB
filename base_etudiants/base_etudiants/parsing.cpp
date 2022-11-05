@@ -94,5 +94,5 @@ bool parse_birthdate(char* date, struct tm* birthdate){
     }
 	sscanf(token, "%d", &itoken);
     birthdate->tm_year = itoken+1900;
-    return true,
+    return true;
 }
