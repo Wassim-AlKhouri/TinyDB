@@ -3,7 +3,7 @@
 #include <string>
 #include <time.h>
 #include <sstream>
-#include <stdatomic.h>
+//#include <stdatomic.h>
 #include <signal.h>
 
 #include "db.h"
@@ -14,7 +14,7 @@
 #define WRITE 1
 #define READ 0
 
-atomic_int processus = 0;
+//atomic_int processus = 0;
 void select(int* fd_s,database_t* db){
 	safe_close(fd_s[WRITE]);
 	query_result_t result; 
@@ -49,7 +49,7 @@ void select(int* fd_s,database_t* db){
 		if(success){
 			result.status = QUERY_SUCCESS;
 			log_query(&result);
-			processus-=1;
+			//processus-=1;
 		}
 	}
 }
@@ -79,7 +79,7 @@ void insert(int* fd_i,database_t* db){
 	if(success){
 		result.status = QUERY_SUCCESS;
 		log_query(&result);
-		processus-=1;
+		//processus-=1;
 	}
 }
 
@@ -118,7 +118,7 @@ void del(int* fd_d,database_t* db){
 		if(success){
 			result.status = QUERY_SUCCESS;
 			log_query(&result);
-			processus-=1;
+			//processus-=1;
 		}
 	}
 }
@@ -307,7 +307,7 @@ void update(int* fd_u,database_t* db){
 		if(success){
 			result.status = QUERY_SUCCESS;
 			log_query(&result);
-			processus-=1;
+			//processus-=1;
 		}
 	}
 	free(field_filter);
@@ -319,7 +319,7 @@ void update(int* fd_u,database_t* db){
 void USR1_handler(int signal){
 	//handler pour les signaux de type SIGUSR1
 	if(signal == SIGUSR1){
-		printf("")
+		
 	}else{
 		printf("Unknown signal");
 	}
@@ -327,14 +327,14 @@ void USR1_handler(int signal){
 void INT_handler(int signal){
 	//handler pour les signaux de type SIGINT
 	if(signal == SIGINT){
-		printf("Commiting database changes to the disk...")
+		printf("Commiting database changes to the disk...");
 	}else{
 		printf("Unknown signal");
 	}
 }
 
 int main(int argc, char const *argv[]) {
-	const char *db_path = "";
+	const char *db_path = *argv;
 	database_t* db = (database_t*)create_shared_memory(sizeof(database_t));
 	db_init(db);
 	db_load(db, db_path);
@@ -389,16 +389,16 @@ int main(int argc, char const *argv[]) {
 			query_result_init(&result,query);
 			if(!strcmp(query_type,"select")){
 				safe_write(fd_s[WRITE],&result,sizeof(query_result_t));
-				processus+=1;
+				//processus+=1;
 			}else if(!strcmp(query_type,"insert")){
 				safe_write(fd_i[WRITE],&result,sizeof(query_result_t));
-				processus+=1;
+				//processus+=1;
 			}else if(!strcmp(query_type,"delete")){
 				safe_write(fd_d[WRITE],&result,sizeof(query_result_t));
-				processus+=1;
+				//processus+=1;
 			}else if(!strcmp(query_type,"update")){
 				safe_write(fd_u[WRITE],&result,sizeof(query_result_t));
-				processus+=1;
+				//processus+=1;
 			}else{
 				printf("demande mal formée");
 			}
