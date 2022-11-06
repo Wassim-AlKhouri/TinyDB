@@ -1,5 +1,5 @@
 #!/bin/bash
-USAGE='script.sh [-d|--dir directory] [-o|--opt options] [filename]'
+USAGE='./monitoring [<database_file>] [-f <queries_file>]'
 
 function parse_args (){
     for param ; do
@@ -10,28 +10,23 @@ function parse_args (){
     done
     while [ $# -gt 0 ]; do
         case "$1" in
-            -d|--dir)
+            -f)
                 if [ $# -lt 2 ] ; then
-                    echo '-d|--dir requires an argument' 1>&2
+                    echo '-f requires an argument' 1>&2
                     exit $BAD_USAGE
                 fi
-                DIR="$2"
+                QUERIES="$2"
                 shift ; shift
-                ;;
-            -c|--opt)
-                if [ $# -lt 2 ] ; then
-                    echo '-o|--opt requires an argument' 1>&2
-                    exit $BAD_USAGE
-                fi
-                OPTIONS="$2"
-                shift
                 ;;
             -*)
                 echo "Option inconnue: $1"
                 exit $BAD_USAGE
                 ;;
             *)
-                FILE_NAME="$1"
+                if [ -f $1 ] ; then
+                	touch "$1"    
+                fi
+                DATABASE="$1"          
                 shift
                 ;;
         esac
@@ -66,11 +61,10 @@ function get_cpids(){
 case "$1" in
 	"run")
 		#Lance un processus tinydb
+		DATABASE="data/students.bin"
 		shift
 		parse_args "$@"
-		echo "dir $DIR"
-		echo "op $OPTIONS"
-		echo "FN $FILE_NAME"
+		./tinydb $DATABASE < $QUERIES
 		;;
 	"status")
 		#Affiche les PIDs des processus principaux en cours d'exécution
