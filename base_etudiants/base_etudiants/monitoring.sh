@@ -24,7 +24,7 @@ function parse_args (){
                     exit $BAD_USAGE
                 fi
                 OPTIONS="$2"
-                shift ; shift
+                shift
                 ;;
             -*)
                 echo "Option inconnue: $1"
@@ -66,7 +66,11 @@ function get_cpids(){
 case "$1" in
 	"run")
 		#Lance un processus tinydb
-		parse_args"$@"
+		shift
+		parse_args "$@"
+		echo "dir $DIR"
+		echo "op $OPTIONS"
+		echo "FN $FILE_NAME"
 		;;
 	"status")
 		#Affiche les PIDs des processus principaux en cours d'exécution
@@ -112,6 +116,7 @@ case "$1" in
 			else
 				echo "$2 is not a parent process of tinydb"
 				exit $BAD_USAGE
+			fi
 		else
 		#Si l'utilisateur ne donne pas de PID alors on shutdown tous les 
 		#processus tinydb (même les fils)
@@ -119,6 +124,7 @@ case "$1" in
 			for p in ${PIDS[@]};do
 				kill $p
 			done
+		fi
 		;;
 	*)
 		echo ""

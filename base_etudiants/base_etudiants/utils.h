@@ -16,7 +16,7 @@
  * @param buffer le buffer dans lequel mettre les données lues
  * @param nbytes le nombre de bytes maximum à lire
  * @return size_t le nombre de bytes lus
- */
+ **/
 size_t safe_read(int fd, void *buffer, size_t nbytes);
 
 /**
@@ -28,13 +28,12 @@ size_t safe_read(int fd, void *buffer, size_t nbytes);
  * @param buffer le buffer dans lequel se trouvent les données
  * @param nbytes le nombre de bytes à écrire
  * @return size_t le nombre de bytes écrits
- */
+ **/
 size_t safe_write(int fd, const void *buffer, size_t nbytes);
 /**
- * closes a pipe safely
- */
+ * Closes a pipe safely
+ **/
 void safe_close(int fd);
-
 /**
  * @brief the result of a query.
  **/
@@ -43,5 +42,4 @@ void log_query(query_result_t *result);
  * creats an mmap
  **/
 void* create_shared_memory(size_t size);
-
 #endif  // _UTILS_H

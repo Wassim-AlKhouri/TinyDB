@@ -8,7 +8,7 @@
 size_t safe_read(int fd, void* buffer, size_t nbytes) {
   ssize_t nbytes_read = read(fd, buffer, nbytes);
   if (nbytes_read < 0) {
-    perror("read error: ");
+    perror("Read pipe error");
     exit(1);
   }
   return (size_t)nbytes_read;
@@ -17,20 +17,18 @@ size_t safe_read(int fd, void* buffer, size_t nbytes) {
 size_t safe_write(int fd, const void* buffer, size_t nbytes) {
   ssize_t bytes_written = write(fd, buffer, nbytes);
   if (bytes_written < 0) {
-    perror("write: ");
+    perror("Write pipe error");
     exit(1);
   }
   return (size_t)bytes_written;
 }
 
-
 void safe_close(int fd){
 	int status = close(fd);
 	if(status < 0){
-		perror("close:");
+		perror("Close pipe failed");
 	}
 }
-
 
 void log_query(query_result_t* result) {
   char buffer[512];
