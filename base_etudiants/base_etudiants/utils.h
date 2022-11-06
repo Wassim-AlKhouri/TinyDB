@@ -31,10 +31,6 @@ size_t safe_read(int fd, void *buffer, size_t nbytes);
  **/
 size_t safe_write(int fd, const void *buffer, size_t nbytes);
 /**
- * Closes a pipe safely
- **/
-void safe_close(int fd);
-/**
  * @brief the result of a query.
  **/
 void log_query(query_result_t *result);

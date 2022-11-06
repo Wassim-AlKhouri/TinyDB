@@ -10,7 +10,7 @@ typedef struct {
   student_t *data; /** The list of students **/
   size_t lsize;    /** The logical size of the list **/
   size_t psize;    /** The physical size of the list **/
-  int count:		   /** Number of students **/
+  int count;		   /** Number of students **/
 } database_t;
 
 /**
@@ -40,5 +40,8 @@ void db_load(database_t *db, const char *path);
  * ```
  **/
 void db_init(database_t *db);
-
+/**
+ * Increases the size of the student's list
+ **/
+void db_resize(database_t *db);
 #endif

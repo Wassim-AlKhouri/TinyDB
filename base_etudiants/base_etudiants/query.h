@@ -12,7 +12,7 @@ typedef struct {
   student_t* students; /** A list of students **/
   size_t lsize;        /** Logical size **/
   size_t psize;        /** Physical size **/
-  int count:		   /** Number of students **/
+  int count;		   /** Number of students **/
   QUERY_STATUS status; /** The return status of the query **/
   char query[256];     /** The actual query that was submitted **/
   long start_ns;       /** The start of the query in nanoseconds **/

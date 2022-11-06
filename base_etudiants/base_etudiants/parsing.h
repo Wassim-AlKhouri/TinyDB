@@ -37,7 +37,9 @@ bool parse_insert(char* query_arguments, char* fname, char* lname, unsigned* id,
  * Parse field=value selectors.
  **/
 bool parse_selectors(char* query, char* field, char* value);
-
-bool parse_birthdate(char* date, struct tm* birthdate);
+/** 
+ * Parse birthdate
+ **/
+bool parse_birthdate(char* C_birthdate, struct tm* birthdate);
 
 #endif

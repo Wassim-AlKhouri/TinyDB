@@ -16,6 +16,7 @@
 #define WRITE 1
 #define READ 0
 
+int SIGRECIEVED = 0;
 void USR1_handler(int signal){
 	//handler pour les signaux de type SIGUSR1
 	if(signal == SIGUSR1){
@@ -28,7 +29,10 @@ void USR1_handler(int signal){
 void INT_handler(int signal){
 	//handler pour les signaux de type SIGINT
 	if(signal == SIGINT){
-		printf("Commiting database changes to the disk...");
+		printf("Waiting for requests to terminate...\n");
+		
+		printf("Commiting database changes to the disk...\n");
+		exit(0);
 		
 	}else{
 		printf("Unknown signal");
@@ -50,12 +54,13 @@ int main(int argc, char const *argv[]) {
 		perror("Pipe failed");
 		exit(0);
 	}
-	safe_close(fd_s[READ]);safe_close(fd_i[READ]);safe_close(fd_d[READ]);safe_close(fd_u[READ]);
+	
 	if (fork()==0){
 		//fils 1
 		pids[1] = getpid();
 	}
 	else {
+		pids[0] = getpid();
 		if(fork()==0){
 			//fils 2
 			pids[2] = getpid();
@@ -73,19 +78,25 @@ int main(int argc, char const *argv[]) {
 			}
 		}
 	}
+	
 	pid_t pid = getpid();
 	if(pid == pids[0]){
 		// processus père
 		signal(SIGUSR1,USR1_handler);
-		signal(SIGINT,INT_handler);
-		while(1){
+		signal(SIGINT,&INT_handler);
+		if(close(fd_s[READ])<0 || close(fd_i[READ])<0 || close(fd_d[READ])<0 || close(fd_u[READ])<0){
+			perror("Close pipe failed");
+			exit(0);
+		}
+		while(!SIGRECIEVED){
 			char query[256];
 			query_result_t result;
-			char query_type[6];
+			char query_type[20];
 			int i = 0;
-			scanf("%[^\t\n]",query);
+			//scanf(" %[^\t\n]",query);
+			fgets(query,256,stdin);
 			while(query[i] != ' '){i++;}
-			strncpy(query_type, query, i);
+			strncpy(query_type, query, (i-1));
 			query_result_init(&result,query);
 			if(!strcmp(query_type,"select")){
 				safe_write(fd_s[WRITE],&result,sizeof(query_result_t));
@@ -100,38 +111,43 @@ int main(int argc, char const *argv[]) {
 				safe_write(fd_u[WRITE],&result,sizeof(query_result_t));
 				queries +=1;
 			}else{
-				printf("demande mal formée");
+				printf("demande mal formée\n");
 			}
 		}
 		db_save(db, db_path);
 		printf("Bye bye!\n");
-		munmap(db,db->psize)
+		munmap(db->data,db->psize);
+		munmap(db,sizeof(database_t));
 		return 0;
 	}else if(pid == pids[1]){
-		// fprocessus fils: select
+		// processus fils: select
 		while(1){
-			select(fd_s, db);
-			queries -=1;
+			if(select(fd_s, db)){
+				queries -=1;
+			}
 		}
 		
 	}else if(pid == pids[2]){
-		// fprocessus fils: insert
+		// processus fils: insert
 		while(1){
-			insert(fd_i, db);
-			queries -=1;
+			if(insert(fd_i, db)){
+				queries -=1;
+			}
 		}
 	}else if(pid == pids[3]){
-		// fprocessus fils: delete
+		// processus fils: delete
 		while(1){
-			del(fd_d, db);
-			queries -=1;
+			if(del(fd_d, db)){
+				queries -=1;
+			}
 		}
 		
 	}else if(pid == pids[4]){
-		// fprocessus fils: update
+		// processus fils: update
 		while(1){
-			update(fd_u, db);
-			queries -=1;
+			if(update(fd_u, db)){
+				queries -=1;
+			}
 		}
 	}
 }

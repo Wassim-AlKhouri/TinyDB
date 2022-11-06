@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <string.h>
 
 #include "student.h"
 
@@ -74,25 +75,32 @@ bool parse_selectors(char* query, char* field, char* value) {
     return true;
 }
 
-bool parse_birthdate(char* date, struct tm* birthdate){
-	int itoken;
-	char* token = strtok_r(NULL,"/",&date);
-	if (token == NULL) {
-        return false;
+bool parse_birthdate(char* C_birthdate, struct tm* birthdate){
+    int i = 0;
+    char day[3]; char month[3]; char year[64];
+    while(C_birthdate[i] != '/'){
+        day[i] = C_birthdate[i];
+        i++;
     }
-	sscanf(token, "%d", &itoken);
-    birthdate->tm_mday = itoken;
-    token = strtok_r(NULL,"/",&date);
-    if (token == NULL) {
-        return false;
+    day[i] = '\0';
+    int j = i + 1;
+    while(C_birthdate[j] != '/'){
+        month[j-i-1] = C_birthdate[j];
+        j++;
     }
-	sscanf(token, "%d", &itoken);
-	birthdate->tm_mon = itoken-1;
-    token = strtok_r(NULL,"/",&date);
-	if (token == NULL) {
-        return false;
+    month[j] = '\0';
+    int k = j+1;
+    while(C_birthdate[k] != '\0'){
+        year[k-j-1] = C_birthdate[k];
+        k++;
     }
-	sscanf(token, "%d", &itoken);
-    birthdate->tm_year = itoken+1900;
+    year[k] = '\0';
+    int int_day; int int_month; int int_year;
+    sscanf(day, "%d", &int_day);
+    sscanf(month, "%d", &int_month);
+    sscanf(year, "%d", &int_year);
+	birthdate->tm_mday = int_day;
+	birthdate->tm_mon = int_month;
+	birthdate->tm_year = int_year;
     return true;
 }

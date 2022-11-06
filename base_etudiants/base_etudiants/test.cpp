@@ -4,6 +4,7 @@
 #include <sstream>
 #include <time.h>
 #include <iostream>
+#include <signal.h>
 bool parse_birthdate(char* date, struct tm* birthdate){
 	/*
 	int itoken;
@@ -37,6 +38,78 @@ bool parse_birthdate(char* date, struct tm* birthdate){
     } 
     return true;
 }
+
+int separator(char* string) {
+    int i = 0;
+    
+    char day[3]; char month[3]; char year[64];
+    
+    while(string[i] != '/'){
+        day[i] = string[i];
+        i++;
+    }
+    day[i] = '\0';
+    printf("%s\n", day);
+    
+    int j = i + 1;
+    while(string[j] != '/'){
+        month[j-i-1] = string[j];
+        j++;
+    }
+    month[j] = '\0';
+    printf("%s\n", month);
+    
+    int k = j+1;
+    while(string[k] != '\0'){
+        year[k-j-1] = string[k];
+        k++;
+    }
+    year[k] = '\0';
+    printf("%s\n", year);
+    
+    int int_day; int int_month; int int_year;
+    sscanf(day, "%d", &int_day);
+    sscanf(month, "%d", &int_month);
+    sscanf(year, "%d", &int_year);
+    
+    struct tm birthdate =  {.tm_mday = 12, .tm_mon = 02, .tm_year = 2000};
+    
+    if(int_day == birthdate.tm_mday){
+        if(int_month == birthdate.tm_mon){
+            if(int_year == birthdate.tm_year){
+                printf("GOOD\n");
+                }
+            }
+        }
+    
+    return 0;
+}
+int SIG = 1;
+void INT_handler(int signal){
+	//handler pour les signaux de type SIGINT
+	if(signal == SIGINT){
+		printf("Waiting for requests to terminate...\n");
+		SIG=0;
+	}else{
+		printf("Unknown signal");
+	}
+}
+
+int main()
+{
+    char date[64];
+    char query[64];
+    int i = 0;
+    signal(SIGINT,&INT_handler);
+    //separator(date);
+    fgets(query,64,stdin);
+	while(query[i] != ' '){i++;}
+	strncpy(date, query, i-1);
+    printf("%s\n",date);
+    printf("sin\n");
+    return 0;
+}
+/*
 int main(){
 	char* champ;
 	char valeur[30]="sto";
@@ -51,22 +124,22 @@ int main(){
 	if(b == strb){
 		printf("c bon\n");
 	}
-	*/
 	scanf("%s", champ);
 	struct tm birthdate;
 	parse_birthdate(champ,&birthdate);
 	struct tm b = {.tm_mday = 1, .tm_mon = 5, .tm_year = 2000};
-	/*
+	
 	if(b.tm_mday == birthdate.tm_mday && b.tm_mon == birthdate.tm_mon && b.tm_year == birthdate.tm_year){
 		printf("c bon\n");
 	}
-	*/
+	
 	time_t tb = mktime(&b);
 	time_t tbirthdate = mktime(&birthdate);
 	if( difftime(tbirthdate,tb) == 0){
 		printf("c bon\n");
 	} 
 }
+*/
 /**
  * 	char champ[64];
 	char valeur[64];

@@ -5,7 +5,6 @@
 #include <time.h>
 #include <sys/mman.h>
 #include "student.h"
-#define DATASIZE 100000
 
 void db_save(database_t *db, const char *path) {
     FILE *f = fopen(path, "wb");
@@ -34,20 +33,34 @@ void db_load(database_t *db, const char *path) {
 }
 
 void db_init(database_t *db) {
-	db->data = (student_t*)create_shared_memory(DATASIZE * sizeof(student_t));
+	db->data = (student_t*)create_shared_memory(1000 * sizeof(student_t));
 	db->lsize = 0;
-	db->psize = 0;
+	db->psize = 1000*sizeof(student_t);
 }
 
 void db_add(database_t *db, student_t student) {
-  db->data[db->lsize] = student;
-  db->lsize = db->lsize + 1;
-  db->psize = db->psize + sizeof(student_t);
+	if( (db->lsize + sizeof(student_t)) > db->psize ){
+		db_resize(db);
+	}
+	db->data[db->count] = student;
+	db->lsize = db->lsize + sizeof(student_t);
+	db->count = db->count + 1;
 }
 
 void db_remove(database_t *db, int i){
-	for(int j=i+1; j<=(int)db->lsize; j++){
+	for(int j=i+1; j<=(int)db->count; j++){
 		db->data[j-1] = db->data[j];
 	}
-	db->lsize = db->lsize -1;
+	db->lsize = db->lsize - sizeof(student_t);
+	db->count = db->count -1;
+}
+
+void db_resize(database_t *db){
+	student_t *tmp = (student_t*)create_shared_memory( db->psize + (1000 * sizeof(student_t)) );
+	for(int i=0; i<=(int)db->count; i++){
+		tmp[i] = db->data[i];
+	}
+	munmap(db->data,db->psize);
+	db->data = tmp;
+	db->psize = db->psize + (1000 * sizeof(student_t));
 }
