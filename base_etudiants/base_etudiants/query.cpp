@@ -1,5 +1,6 @@
 #include "query.h"
 
+#include <cstdlib>
 #include <time.h>
 
 void query_result_init(query_result_t* result, const char* query) {
@@ -7,13 +8,28 @@ void query_result_init(query_result_t* result, const char* query) {
   clock_gettime(CLOCK_REALTIME, &now);
   result->start_ns = now.tv_nsec + 1e9 * now.tv_sec;
   result->status = QUERY_FAILURE;
+  result->students = (student_t*) malloc(1000 * sizeof(student_t));
   result->lsize = 0;
-  result->psize = 2*sizeof(long) + 2*sizeof(size_t) + 256*sizeof(char) + sizeof(QUERY_STATUS);
+  result->count = 0;
+  result->psize = 1000 * sizeof(student_t);
   strcpy(result->query,query);
 }
 
 void query_result_add(query_result_t* result, student_t s){
-	result->students[result->lsize] = s;
-	result->lsize = result->lsize  + 1;
-	result->psize = result->psize  + sizeof(student_t);
+	if( (result->lsize + sizeof(student_t)) >= result->psize ){
+		query_result_resize(result);
+	}
+	result->students[result->count] = s;
+	result->lsize = result->lsize  + sizeof(student_t);
+	result->count = result->count + 1;
+}
+
+void query_result_resize(query_result_t* result){
+	student_t *tmp = (student_t*) malloc( result->psize + (1000 * sizeof(student_t)) );
+	for(int i=0; i<=(int)result->count; i++){
+		tmp[i] = result->students[i];
+	}
+	free(result->students);
+	result->students = tmp;
+	result->psize = result->psize + (1000 * sizeof(student_t));	
 }

@@ -30,20 +30,22 @@ void INT_handler(int signal){
 	//handler pour les signaux de type SIGINT
 	if(signal == SIGINT){
 		printf("Waiting for requests to terminate...\n");
-		
 		printf("Commiting database changes to the disk...\n");
+		SIGRECIEVED = 1;
 		exit(0);
-		
 	}else{
 		printf("Unknown signal");
 	}
 }
 
 int main(int argc, char const *argv[]) {
-	const char *db_path = *argv;
+	printf("Welcome to the Tiny Database!\n");
+	printf("Loading the database...\n");
+	const char *db_path = argv[1];
 	database_t* db = (database_t*)create_shared_memory(sizeof(database_t));
 	db_init(db);
 	db_load(db, db_path);
+	printf("Done!\n");
 	volatile sig_atomic_t queries = 0;
 	pid_t pids[5]= {0,0,0,0,0};
 	int fd_s[2];
@@ -90,29 +92,28 @@ int main(int argc, char const *argv[]) {
 		}
 		while(!SIGRECIEVED){
 			char query[256];
-			query_result_t result;
 			char query_type[20];
 			int i = 0;
-			//scanf(" %[^\t\n]",query);
-			fgets(query,256,stdin);
+			scanf(" %[^\t\n]",query);
+			printf("Running query '%s'\n",query);
 			while(query[i] != ' '){i++;}
-			strncpy(query_type, query, (i-1));
-			query_result_init(&result,query);
+			strncpy(query_type, query, i);
 			if(!strcmp(query_type,"select")){
-				safe_write(fd_s[WRITE],&result,sizeof(query_result_t));
+				safe_write(fd_s[WRITE],&query,256*sizeof(char));
 				queries +=1;
 			}else if(!strcmp(query_type,"insert")){
-				safe_write(fd_i[WRITE],&result,sizeof(query_result_t));
+				safe_write(fd_i[WRITE],&query,256*sizeof(char));
 				queries +=1;
 			}else if(!strcmp(query_type,"delete")){
-				safe_write(fd_d[WRITE],&result,sizeof(query_result_t));
+				safe_write(fd_d[WRITE],&query,256*sizeof(char));
 				queries +=1;
 			}else if(!strcmp(query_type,"update")){
-				safe_write(fd_u[WRITE],&result,sizeof(query_result_t));
+				safe_write(fd_u[WRITE],&query,256*sizeof(char));
 				queries +=1;
 			}else{
 				printf("demande mal formée\n");
 			}
+			//printf("%i\n",queries);
 		}
 		db_save(db, db_path);
 		printf("Bye bye!\n");
@@ -121,31 +122,47 @@ int main(int argc, char const *argv[]) {
 		return 0;
 	}else if(pid == pids[1]){
 		// processus fils: select
+		if(close(fd_s[WRITE])){
+			perror("Close pipe_s failed");
+		}
 		while(1){
 			if(select(fd_s, db)){
+				printf("select query done\n");
 				queries -=1;
 			}
 		}
 		
 	}else if(pid == pids[2]){
-		// processus fils: insert
+		// processus fils: insert	
+		if(close(fd_i[WRITE])){
+			perror("Close pipe_i failed");
+		}
 		while(1){
 			if(insert(fd_i, db)){
+				printf("insert query done\n");
 				queries -=1;
 			}
 		}
 	}else if(pid == pids[3]){
 		// processus fils: delete
+		if(close(fd_d[WRITE])){
+			perror("Close pipe_d failed");
+		}
 		while(1){
 			if(del(fd_d, db)){
+				printf("delete query done\n");
 				queries -=1;
 			}
 		}
 		
 	}else if(pid == pids[4]){
 		// processus fils: update
+		if(close(fd_u[WRITE])){
+			perror("Close pipe_u failed");
+		}
 		while(1){
 			if(update(fd_u, db)){
+				printf("update query done\n");
 				queries -=1;
 			}
 		}

@@ -35,14 +35,16 @@ void db_load(database_t *db, const char *path) {
 void db_init(database_t *db) {
 	db->data = (student_t*)create_shared_memory(1000 * sizeof(student_t));
 	db->lsize = 0;
+	db->count = 0;
 	db->psize = 1000*sizeof(student_t);
 }
 
 void db_add(database_t *db, student_t student) {
-	if( (db->lsize + sizeof(student_t)) > db->psize ){
+	if( (db->lsize + sizeof(student_t)) >= db->psize ){
 		db_resize(db);
 	}
 	db->data[db->count] = student;
+	printf("%s\n", student.fname);
 	db->lsize = db->lsize + sizeof(student_t);
 	db->count = db->count + 1;
 }

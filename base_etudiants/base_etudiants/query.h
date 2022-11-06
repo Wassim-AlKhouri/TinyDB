@@ -4,7 +4,6 @@
 #include "db.h"
 
 typedef enum { QUERY_SUCCESS, QUERY_FAILURE, UNRECOGNISED_FIELD } QUERY_STATUS;
-
 /**
  * A query_result_t describes the result of a query.
  */
@@ -18,15 +17,17 @@ typedef struct {
   long start_ns;       /** The start of the query in nanoseconds **/
   long end_ns;         /** The end of the query in nanoseconds **/
 } query_result_t;
-
 /**
  * Initialise a query_result_t structure.
  **/
 void query_result_init(query_result_t* result, const char* query);
-
 /**
  * Add a student to a query result.
  **/
 void query_result_add(query_result_t* result, student_t s);
+/**
+ * Increases the size of the student's list
+ **/
+void query_result_resize(query_result_t* result);
 
 #endif

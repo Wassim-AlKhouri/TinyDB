@@ -34,12 +34,13 @@ void log_query(query_result_t* result) {
     printf("%s\n", filename);
     FILE* f = fopen(filename, "w");
     float duration = (float)(result->end_ns - result->start_ns) / 1.0e6;
-    sprintf(buffer, "Query \"%s\" completed in %fms with %ld results.\n", result->query, duration, result->lsize);
+    sprintf(buffer, "Query \"%s\" completed in %fms with %d results.\n", result->query, duration, result->count);
     fwrite(buffer, sizeof(char), strlen(buffer), f);
-    if (result->lsize > 0) {
-      for (int i = 0; i < (int)result->lsize; i++) {
-        student_to_str(buffer, &result->students[i]);
-        fwrite(buffer, sizeof(char), strlen(buffer), f);
+    if (result->count > 0) {
+      for (int i = 0; i < result->count; i++) {
+		  char buff[256];
+        student_to_str(buff, &result->students[i]);
+        fwrite(buff, sizeof(char), strlen(buffer), f);
         fwrite("\n", sizeof(char), 1, f);
       }
     }

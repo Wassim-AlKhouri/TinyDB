@@ -100,13 +100,14 @@ int main()
     char date[64];
     char query[64];
     int i = 0;
-    signal(SIGINT,&INT_handler);
+    //signal(SIGINT,&INT_handler);
     //separator(date);
-    fgets(query,64,stdin);
-	while(query[i] != ' '){i++;}
-	strncpy(date, query, i-1);
-    printf("%s\n",date);
-    printf("sin\n");
+    //fgets(query,64,stdin);
+	//while(query[i] != ' '){i++;}
+	//strncpy(date, query, i*sizeof(char));
+	if(!strcmp("select","select")){
+		printf("sin\n");
+	}
     return 0;
 }
 /*
