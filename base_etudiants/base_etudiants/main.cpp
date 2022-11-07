@@ -75,7 +75,7 @@ int main(int argc, char const *argv[]) {
 	db_init(db);
 	db_load(db, db_path);
 	printf("Done!\n");
-	*queries = 0;
+	*queries = 0; 
 	int fd_s[2];
 	int fd_i[2];
 	int fd_d[2];
@@ -129,29 +129,30 @@ int main(int argc, char const *argv[]) {
 			char query[256]=" ";
 			char query_type[20]=" ";
 			int i = 0;
+			printf("%i\n",*queries); 
 			scanf(" %[^\t\n]",query);
 			while(query[i] != ' '){i++;}
 			strncpy(query_type, query, i);
-			printf("%s\n",query_type);
 			if(!strcmp(query_type,"select")){
 				// envois du requête de type "select" vers le processus dédié
 				printf("Running query '%s'\n",query);
 				safe_write(fd_s[WRITE],&query,256*sizeof(char));
+				//*queries +=1;      Normalement Augmente de 1 lors d'une requête et diminue à la fin mais ne fonctionne pas
 			}else if(!strcmp(query_type,"insert")){
 				// envois du requête de type "insert" vers le processus dédié
 				printf("Running query '%s'\n",query);
 				safe_write(fd_i[WRITE],&query,256*sizeof(char));
-				*queries +=1;
+				//*queries +=1;
 			}else if(!strcmp(query_type,"delete")){
 				// envois du requête de type "delete" vers le processus dédié
 				printf("Running query '%s'\n",query);
 				safe_write(fd_d[WRITE],&query,256*sizeof(char));
-				*queries +=1;
+				//*queries +=1;
 			}else if(!strcmp(query_type,"update")){
 				// envois du requête de type "update" vers le processus dédié
 				printf("Running query '%s'\n",query);
 				safe_write(fd_u[WRITE],&query,256*sizeof(char));
-				*queries +=1;
+				//*queries +=1;
 			}else if(!strcmp(query_type,"transaction")){
 				// attente jusqu'à la fin de tous les requêtes
 				while(*queries > 0){sleep(1);}
@@ -160,8 +161,9 @@ int main(int argc, char const *argv[]) {
 				printf("demande mal formée\n");
 			}
 		}
-		printf("Waiting for requests to terminate...\n");
+		
 		while(*queries > 0){sleep(1);}
+		printf("Waiting for requests to terminate...\n");
 		printf("Commiting database changes to the disk...\n");
 		db_save(db,db_path);
 		for(int i=1;i<5;i++){kill(pids[i],SIGINT);}
@@ -178,7 +180,7 @@ int main(int argc, char const *argv[]) {
 		while(1){
 			if(select(fd_s, db)){
 				printf("select query done\n");
-				*queries -=1;
+				//*queries = *queries - 1;
 			}
 		}
 		
@@ -190,7 +192,7 @@ int main(int argc, char const *argv[]) {
 		while(1){
 			if(insert(fd_i, db)){
 				printf("insert query done\n");
-				*queries -=1;
+				//*queries = *queries - 1;
 			}
 		}
 	}else if(pid == pids[3]){
@@ -201,7 +203,7 @@ int main(int argc, char const *argv[]) {
 		while(1){
 			if(del(fd_d, db)){
 				printf("delete query done\n");
-				*queries -=1;
+				//*queries = *queries - 1;
 			}
 		}
 		
@@ -213,7 +215,7 @@ int main(int argc, char const *argv[]) {
 		while(1){
 			if(update(fd_u, db)){
 				printf("update query done\n");
-				*queries -=1;
+				//*queries = *queries - 1;
 			}
 		}
 	}

@@ -90,6 +90,7 @@ bool insert(int* fd_i,database_t* db){
 				printf("student id already exists \n");
 				exist = true;
 				success = false;
+				break;
 			}
 		}
 		if(!exist){
@@ -423,9 +424,6 @@ bool update(int* fd_u,database_t* db){
 		}
 		
 		if(success){
-			for(int i=0;i<db->count;i++){
-				printf("%s \n",db->data[i].fname);
-			}
 			result.status = QUERY_SUCCESS;
 			log_query(&result);
 			//processus-=1;

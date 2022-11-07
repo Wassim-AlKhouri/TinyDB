@@ -51,7 +51,7 @@ case "$1" in
 		parse_args "$@"
 		./tinydb "$DATABASE" < "$QUERIES" &
 		echo "pid=$!"
-		fg | grep NULL
+		fg
 		;;
 	"status")
 		#Affiche les PIDs des processus principaux en cours d'exécution

@@ -1,0 +1,3 @@
+Query "update section" completed in -1667858694144.000000ms with 2 results.
+Pharmacien Durandal 111111 pharma 12/12/1994
+Pharmacien Vancauwelaert 472905 pharma 8/8/1998
