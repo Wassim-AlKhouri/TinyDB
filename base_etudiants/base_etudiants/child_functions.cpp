@@ -9,11 +9,11 @@
 #include "student.h"
 #include "parsing.h"
 
-
 #define WRITE 1
 #define READ 0
 
 bool select(int* fd_s,database_t* db){
+	// fonction permettant de traiter les requêtes de type "select" 
 	query_result_t result;
 	char query[256];
 	safe_read(fd_s[READ],&query,256*sizeof(char));
@@ -26,6 +26,9 @@ bool select(int* fd_s,database_t* db){
 		success = false;
 	}else{
 		for(int i=0;i<db->count;i++){
+			//on parcourt les étudiants dans la db en testant sur quel filtre
+			//on travaille ("fname","lname",..) et si la caractéristique
+			//de l'étudiant correspond bien à celui qu'on cherche.
 			if(!strcmp(field,"fname")){
 				if(!strcmp(value,db->data[i].fname)){
 					query_result_add(&result,db->data[i]);
@@ -69,6 +72,7 @@ bool select(int* fd_s,database_t* db){
 }
 
 bool insert(int* fd_i,database_t* db){
+	// fonction permettant de traiter les requêtes de type "insert" 
 	query_result_t result;
 	char query[256];
 	safe_read(fd_i[READ],&query,256*sizeof(char));
@@ -80,6 +84,8 @@ bool insert(int* fd_i,database_t* db){
 	}else{
 		int exist = false;
 		for(int i=0;i<db->count;i++){
+			//on parcourt les étudiants dans la db et on teste si l'étudiant
+			// existe déjà.
 			if(student_equals(&new_student,&(db->data[i]))){
 				printf("student id already exists \n");
 				exist = true;
@@ -100,6 +106,7 @@ bool insert(int* fd_i,database_t* db){
 }
 
 bool del(int* fd_d,database_t* db){
+	// fonction permettant de traiter les requêtes de type "delete" 
 	query_result_t result; 
 	char query[256];
 	safe_read(fd_d[READ],&query,256*sizeof(char));
@@ -112,16 +119,17 @@ bool del(int* fd_d,database_t* db){
 		success = false;
 	}else{
 		for(int i=0;i<db->count;i++){
+			//on parcourt les étudiants dans la db en testant sur quel filtre
+			//on travaille ("fname","lname",..) et si la caractéristique
+			//de l'étudiant correspond bien à celui qu'on cherche.
 			if(!strcmp(field,"fname")){
 				if(!strcmp(value,db->data[i].fname)){
 					query_result_add(&result,db->data[i]);
-					//db_remove(db,i);
 					success = true;
 				}
 			}else if(!strcmp(field,"lname")){
 				if(!strcmp(value,db->data[i].lname)){
 					query_result_add(&result,db->data[i]);
-					//db_remove(db,i);
 					success = true;
 				}
 			}else if(!strcmp(field,"id")){
@@ -129,7 +137,6 @@ bool del(int* fd_d,database_t* db){
 				sscanf(value, "%u", &UIvalue);
 				if(UIvalue == db->data[i].id){
 					query_result_add(&result,db->data[i]);
-					//db_remove(db,i);
 					success = true;
 				}
 			}else if(!strcmp(field,"birthdate") ){
@@ -137,13 +144,11 @@ bool del(int* fd_d,database_t* db){
 				strptime(value,"%d/%m/%Y",&birthdate);
 				if(birthdate.tm_mday == db->data[i].birthdate.tm_mday && birthdate.tm_mon == db->data[i].birthdate.tm_mon && birthdate.tm_year == db->data[i].birthdate.tm_year){
 					query_result_add(&result,db->data[i]);
-					//db_remove(db,i);
 					success = true;
 				}
 			}else if(!strcmp(field,"section")){
 				if(!strcmp(value,db->data[i].section)){
 					query_result_add(&result,db->data[i]);
-					//db_remove(db,i);
 					success = true;
 				}
 			}else {
@@ -153,19 +158,19 @@ bool del(int* fd_d,database_t* db){
 		}
 		if(success){
 			for(int i=0;i<result.count;i++){
+				//on parcout la liste des étudiants choisis et on
+				//les enlève de la liste.
 				db_remove(db,result.students[i]);
 			}
 			result.status = QUERY_SUCCESS;
 			log_query(&result);
-			for(int i=0;i<db->count;i++){
-				printf("%s \n",db->data[i].fname);
-			}
 		}
 	}
 	return true;
 }
 
 bool update(int* fd_u,database_t* db){
+	// fonction permettant de traiter les requêtes de type "update" 
 	query_result_t result; 
 	char query[256];
 	safe_read(fd_u[READ],&query,256*sizeof(char));
@@ -180,7 +185,10 @@ bool update(int* fd_u,database_t* db){
 			success = false;
 	}else{
 		for(int i=0;i<db->count;i++){
-			
+			//on parcourt les étudiants dans la db en testant sur quel field_filtre
+			//on travaille ("fname","lname",..) et si la caractéristique
+			//de l'étudiant correspond bien à celui qu'on cherche.
+			//si c'est le cas alors on va tester sur quel update_filtre on traville.
 		
 			// filtre = fname
 			if(!strcmp(field_filter,"fname")){
@@ -205,7 +213,7 @@ bool update(int* fd_u,database_t* db){
 						query_result_add(&result,db->data[i]);
 					}
 					
-					else if(!strcmp(field_to_update,"birthdate")){// à faire
+					else if(!strcmp(field_to_update,"birthdate")){
 						struct tm birthdate;
 						strptime(update_value,"%d/%m/%Y",&birthdate);
 						db->data[i].birthdate = birthdate;
@@ -249,7 +257,7 @@ bool update(int* fd_u,database_t* db){
 						query_result_add(&result,db->data[i]);
 					}
 					
-					else if(!strcmp(field_to_update,"birthdate")){// à faire
+					else if(!strcmp(field_to_update,"birthdate")){
 						struct tm birthdate;
 						strptime(update_value,"%d/%m/%Y",&birthdate);
 						db->data[i].birthdate = birthdate;
@@ -295,7 +303,7 @@ bool update(int* fd_u,database_t* db){
 						query_result_add(&result,db->data[i]);
 					}
 					
-					else if(!strcmp(field_to_update,"birthdate")){// à faire
+					else if(!strcmp(field_to_update,"birthdate")){
 						struct tm birthdate;
 						strptime(update_value,"%d/%m/%Y",&birthdate);
 						db->data[i].birthdate = birthdate;
@@ -317,8 +325,7 @@ bool update(int* fd_u,database_t* db){
 			}
 			
 			// filtre = birthdate
-			else if(!strcmp(field_filter,"birthdate")){//à faire
-				//&& value_filter==db->data[i].birthdate
+			else if(!strcmp(field_filter,"birthdate")){
 				struct tm birthdate_filter;
 				strptime(value_filter,"%d/%m/%Y",&birthdate_filter);
 				if(birthdate_filter.tm_mday == db->data[i].birthdate.tm_mday && birthdate_filter.tm_mon == db->data[i].birthdate.tm_mon && birthdate_filter.tm_year == db->data[i].birthdate.tm_year){
@@ -342,7 +349,7 @@ bool update(int* fd_u,database_t* db){
 						query_result_add(&result,db->data[i]);
 					}
 					
-					else if(!strcmp(field_to_update,"birthdate")){// à faire
+					else if(!strcmp(field_to_update,"birthdate")){
 						struct tm birthdate;
 						strptime(update_value,"%d/%m/%Y",&birthdate);
 						db->data[i].birthdate = birthdate;

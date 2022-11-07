@@ -21,37 +21,29 @@ database_t* db = (database_t*)create_shared_memory(sizeof(database_t));
 const char *db_path; 
 int* queries = (int*)create_shared_memory(sizeof(int));
 pid_t pids[5] =  {0,0,0,0,0};
-void USR2_handler(int signal){
-	//handler pour les signaux de type SIGUSR2
-	if(signal == SIGUSR2){
-		munmap(queries,sizeof(int));
-		munmap(db->data,db->psize);
-		munmap(db,sizeof(database_t));
-		for(int i=1;i<5;i++){kill(pids[i],SIGUSR2);}
-		exit(0);
-	}else{
-		printf("Unknown signal");
-	}
-}
-
-void child_USR2_handler(int signal){
-	//handler pour les signaux de type SIGUSR2
-	if(signal == SIGUSR2){
-		exit(0);
-	}else{
-		printf("Unknown signal");
-	}
-}
 
 void USR1_handler(int signal){
 	//handler pour les signaux de type SIGUSR1
 	if(signal == SIGUSR1){
 		while(*queries > 0){sleep(1);}
 		db_save(db,db_path);
+		for(int i=1;i<5;i++){kill(pids[i],SIGINT);printf("KILL1\n");}
 		munmap(queries,sizeof(int));
 		munmap(db->data,db->psize);
 		munmap(db,sizeof(database_t));
-		for(int i=1;i<5;i++){kill(pids[i],SIGUSR2);}
+		exit(0);
+	}else{
+		printf("Unknown signal");
+	}
+}
+
+void USR2_handler(int signal){
+	//handler pour les signaux de type SIGUSR2
+	if(signal == SIGUSR2){
+		for(int i=1;i<5;i++){kill(pids[i],SIGINT);printf("KILL2\n");}
+		munmap(queries,sizeof(int));
+		munmap(db->data,db->psize);
+		munmap(db,sizeof(database_t));
 		exit(0);
 	}else{
 		printf("Unknown signal");
@@ -61,19 +53,15 @@ void USR1_handler(int signal){
 void INT_handler(int signal){
 	//handler pour les signaux de type SIGINT
 	if(signal == SIGINT){
-		printf("Waiting for requests to terminate...\n");
-		while(*queries > 0){}
+		printf("\nWaiting for requests to terminate...\n");
+		while(*queries > 0){sleep(1);}
 		printf("Commiting database changes to the disk...\n");
 		db_save(db,db_path);
+		for(int i=1;i<5;i++){kill(pids[i],SIGINT);}
 		munmap(queries,sizeof(int));
 		munmap(db->data,db->psize);
 		munmap(db,sizeof(database_t));
-		printf("ICI\n");
-		for(int i=1;i<5;i++){
-			printf("KILL\n");
-			kill(pids[i],SIGUSR2);
-		}
-		printf("Done!");
+		printf("Done!\n");
 		exit(0);
 	}else{
 		printf("Unknown signal");
@@ -124,50 +112,65 @@ int main(int argc, char const *argv[]) {
 	pid_t pid = getpid();
 	if(pid == pids[0]){
 		// processus père
-		signal(SIGUSR1,&USR1_handler);
-		signal(SIGUSR2,&USR2_handler);
-		signal(SIGINT,&INT_handler);
+		struct sigaction usr1={0};
+		usr1.sa_handler = &USR1_handler;
+		struct sigaction usr2={0};
+		usr2.sa_handler = &USR2_handler;
+		struct sigaction int1={0};
+		int1.sa_handler = &INT_handler;
+		sigaction(SIGUSR1,&usr1,NULL);
+		sigaction(SIGUSR2,&usr2,NULL);
+		sigaction(SIGINT,&int1,NULL);
+		//signal(SIGINT,INT_handler);
+		//signal(SIGUSR1,USR1_handler);
+		//signal(SIGUSR2,USR2_handler);
 		if(close(fd_s[READ])<0 || close(fd_i[READ])<0 || close(fd_d[READ])<0 || close(fd_u[READ])<0){
 			perror("Close pipe failed");
 			exit(0);
 		}
 		while(!feof(stdin)){
-			char query[256];
-			char query_type[20];
+			char query[256]=" ";
+			char query_type[20]=" ";
 			int i = 0;
 			scanf(" %[^\t\n]",query);
-			printf("Running query '%s'\n",query);
 			while(query[i] != ' '){i++;}
 			strncpy(query_type, query, i);
+			printf("%s\n",query_type);
 			if(!strcmp(query_type,"select")){
+				printf("Running query '%s'\n",query);
 				safe_write(fd_s[WRITE],&query,256*sizeof(char));
-				printf("%d\n",*queries);
 			}else if(!strcmp(query_type,"insert")){
+				printf("Running query '%s'\n",query);
 				safe_write(fd_i[WRITE],&query,256*sizeof(char));
 				*queries +=1;
 			}else if(!strcmp(query_type,"delete")){
+				printf("Running query '%s'\n",query);
 				safe_write(fd_d[WRITE],&query,256*sizeof(char));
 				*queries +=1;
 			}else if(!strcmp(query_type,"update")){
+				printf("Running query '%s'\n",query);
 				safe_write(fd_u[WRITE],&query,256*sizeof(char));
 				*queries +=1;
+			}else if(!strcmp(query_type,"transaction")){
+				while(*queries > 0){sleep(1);}
+				printf("queries done\n");
 			}else{
-				printf("demande mal formée\n");
+				printf("demande mal formée ICI\n");
 			}
 		}
-		printf("Waiting for requests to terminate...\n");
+		printf("Waiting for requests to terminate...ICICICI\n");
 		while(*queries > 0){sleep(1);}
-		printf("Commiting database changes to the disk...\n");
+		printf("Commiting database changes to the disk...CICICICI\n");
 		db_save(db,db_path);
+		printf("TOTOTOTOT\n");
+		for(int i=1;i<5;i++){kill(pids[i],SIGINT);printf("KILL\n");}
 		munmap(queries,sizeof(int));
 		munmap(db->data,db->psize);
 		munmap(db,sizeof(database_t));
-		for(int i=1;i<5;i++){kill(pids[i],SIGUSR2);}
 		printf("Done!");
 		return 0;
 	}else if(pid == pids[1]){
 		// processus fils: select
-		signal(SIGUSR2,&child_USR2_handler);
 		if(close(fd_s[WRITE])){
 			perror("Close pipe_s failed");
 		}
@@ -180,7 +183,6 @@ int main(int argc, char const *argv[]) {
 		
 	}else if(pid == pids[2]){
 		// processus fils: insert	
-		signal(SIGUSR2,&child_USR2_handler);
 		if(close(fd_i[WRITE])){
 			perror("Close pipe_i failed");
 		}
@@ -192,7 +194,6 @@ int main(int argc, char const *argv[]) {
 		}
 	}else if(pid == pids[3]){
 		// processus fils: delete
-		signal(SIGUSR2,&child_USR2_handler);
 		if(close(fd_d[WRITE])){
 			perror("Close pipe_d failed");
 		}
@@ -205,7 +206,6 @@ int main(int argc, char const *argv[]) {
 		
 	}else if(pid == pids[4]){
 		// processus fils: update
-		signal(SIGUSR2,&child_USR2_handler);
 		if(close(fd_u[WRITE])){
 			perror("Close pipe_u failed");
 		}

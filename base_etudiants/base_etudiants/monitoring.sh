@@ -1,5 +1,6 @@
 #!/bin/bash
-USAGE='./monitoring [<database_file>] [-f <queries_file>]'
+set -m
+USAGE='./monitoring run [<database_file>] [-f <queries_file>]'
 
 function parse_args (){
     for param ; do
@@ -48,7 +49,9 @@ case "$1" in
 		DATABASE="data/students.bin"
 		shift
 		parse_args "$@"
-		./tinydb $DATABASE $QUERIES
+		./tinydb $DATABASE < $QUERIES&
+		echo "pid=$!"
+		fg
 		;;
 	"status")
 		#Affiche les PIDs des processus principaux en cours d'exécution
@@ -74,7 +77,7 @@ case "$1" in
 			echo "Found ${#PPIDS[@]} instances of tinydb"
 			for p in ${PPIDS[@]};do
 				echo "	Sync process $p..."
-				kill -s USR1 $p
+				kill -10 $p
 			done
 			while [ ${#PPIDS[@]} -gt 0 ];do
 				get_ppids
@@ -89,8 +92,8 @@ case "$1" in
 		#Si l'utilisateur donne un PID à shutdown alors on teste si
 		#Il se trouve dans la liste des processus principaux.
 			get_ppids
-			if [ " ${PPIDS[*]} " =~ "$2" ];then
-				kill $2
+			if [[ " ${PPIDS[*]} " =~ "$2" ]];then
+				kill -12 $2
 			else
 				echo "$2 is not a parent process of tinydb"
 				exit $BAD_USAGE
@@ -100,7 +103,7 @@ case "$1" in
 		#processus tinydb (même les fils)
 			get_ppids
 			for p in ${PPIDS[@]};do
-				kill $p
+				kill -12 $p
 			done
 
 		fi
@@ -108,5 +111,3 @@ case "$1" in
 	*)
 		echo ""
 esac
-		
-

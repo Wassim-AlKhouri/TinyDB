@@ -1,0 +1,2 @@
+Query "delete lname" completed in -1667757899776.000000ms with 1 results.
+Emeline Lecomte 878787 chemistry 15/4/1993

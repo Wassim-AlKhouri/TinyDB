@@ -1,0 +1,2 @@
+Query "insert zer" completed in -1667712679936.000000ms with 1 results.
+zer sdf 123 info 14/5/1999

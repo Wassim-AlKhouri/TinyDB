@@ -33,7 +33,7 @@ void db_load(database_t *db, const char *path) {
 }
 
 void db_init(database_t *db) {
-	db->data = (student_t*)create_shared_memory(1000 * sizeof(student_t));
+	db->data = (student_t*)create_shared_memory(1000*sizeof(student_t));
 	db->lsize = 0;
 	db->count = 0;
 	db->psize = 1000*sizeof(student_t);
@@ -44,12 +44,14 @@ void db_add(database_t *db, student_t student) {
 		db_resize(db);
 	}
 	db->data[db->count] = student;
-	printf("%s,%s,%u,%s,%d/%d/%d\n", student.fname, student.lname, student.id, student.section, student.birthdate.tm_mday, student.birthdate.tm_mon, student.birthdate.tm_year);
+	//printf("%s,%s,%u,%s,%d/%d/%d\n", student.fname, student.lname, student.id, student.section, student.birthdate.tm_mday, student.birthdate.tm_mon, student.birthdate.tm_year);
 	db->lsize = db->lsize + sizeof(student_t);
 	db->count = db->count + 1;
 }
 
 void db_remove(database_t *db, student_t s){
+	//on commence par trouver la position de l'étudiant dans la liste.
+	//Puis on copie l'étudiant d'après 
 	int i=0;
 	for(int k=0;k<db->count;k++){
 		if(student_equals(&db->data[k],&s)){i=k;}
@@ -62,6 +64,9 @@ void db_remove(database_t *db, student_t s){
 }
 
 void db_resize(database_t *db){
+	//on crée un nouveau "mmap" qui est plus grand et on copie tous les 
+	//étudiants dedans. Puis on libère la mémoire du 1er "mmap" et on redirige le pointeur
+	//vers le nouveau.  
 	student_t *tmp = (student_t*)create_shared_memory( db->psize + (1000 * sizeof(student_t)) );
 	for(int i=0; i<db->count; i++){
 		tmp[i] = db->data[i];
