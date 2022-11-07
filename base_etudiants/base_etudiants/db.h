@@ -20,7 +20,7 @@ void db_add(database_t *db, student_t s);
 /**
  *  Remove the student number i in the list from the database.
  **/
-void db_remove(database_t *db, int i);
+void db_remove(database_t *db, student_t s);
 /**
  * Save the content of a database_t in the specified file.
  **/

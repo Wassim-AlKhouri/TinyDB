@@ -47,14 +47,14 @@ function get_allpids(){
 	PIDS=()
 	while IFS= read -r line;do
 		PIDS+=("$line")
-	done < <(ps | grep tinydb | awk '{print $1}')
+	done < <(ps ef -opid,cmd -C tinydb | grep tinydb | awk '{print $1}')
 }
 
 function get_cpids(){
 	#fonction qui trouve les PIDs des processus fils d'un certain processus
 	CPIDS=()
 	while IFS= read -r line;do
-		PIDS+=("$line")
+		CPIDS+=("$line")
 	done < <(pgrep -P $1)
 }
 
@@ -118,6 +118,7 @@ case "$1" in
 			for p in ${PIDS[@]};do
 				kill $p
 			done
+
 		fi
 		;;
 	*)

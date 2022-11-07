@@ -44,13 +44,17 @@ void db_add(database_t *db, student_t student) {
 		db_resize(db);
 	}
 	db->data[db->count] = student;
-	printf("%s\n", student.fname);
+	printf("%s,%s,%u,%s,%d/%d/%d\n", student.fname, student.lname, student.id, student.section, student.birthdate.tm_mday, student.birthdate.tm_mon, student.birthdate.tm_year);
 	db->lsize = db->lsize + sizeof(student_t);
 	db->count = db->count + 1;
 }
 
-void db_remove(database_t *db, int i){
-	for(int j=i+1; j<=(int)db->count; j++){
+void db_remove(database_t *db, student_t s){
+	int i=0;
+	for(int k=0;k<db->count;k++){
+		if(student_equals(&db->data[k],&s)){i=k;}
+	}
+	for(int j=i+1; j<db->count; j++){
 		db->data[j-1] = db->data[j];
 	}
 	db->lsize = db->lsize - sizeof(student_t);
@@ -59,7 +63,7 @@ void db_remove(database_t *db, int i){
 
 void db_resize(database_t *db){
 	student_t *tmp = (student_t*)create_shared_memory( db->psize + (1000 * sizeof(student_t)) );
-	for(int i=0; i<=(int)db->count; i++){
+	for(int i=0; i<db->count; i++){
 		tmp[i] = db->data[i];
 	}
 	munmap(db->data,db->psize);

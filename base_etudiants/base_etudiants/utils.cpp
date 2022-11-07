@@ -38,9 +38,8 @@ void log_query(query_result_t* result) {
     fwrite(buffer, sizeof(char), strlen(buffer), f);
     if (result->count > 0) {
       for (int i = 0; i < result->count; i++) {
-		  char buff[256];
-        student_to_str(buff, &result->students[i]);
-        fwrite(buff, sizeof(char), strlen(buffer), f);
+        student_to_str(buffer, &result->students[i]);
+        fwrite(buffer, sizeof(char), strlen(buffer), f);
         fwrite("\n", sizeof(char), 1, f);
       }
     }

@@ -97,16 +97,22 @@ void INT_handler(int signal){
 
 int main()
 {
-    char date[64];
+    char date[64]="31/02/2000";
     char query[64];
     int i = 0;
+    struct tm birthdate =  {.tm_mday = 12, .tm_mon = 02, .tm_year = 2000};
+    struct tm c_birthdate;
+    strptime(date,"%d/%m/%Y",&c_birthdate);
+    printf("%d %d %d \n",c_birthdate.tm_mday,c_birthdate.tm_mon,c_birthdate.tm_year);
+    printf("%d %d %d \n",birthdate.tm_mday,birthdate.tm_mon,birthdate.tm_year);
+    double diff = difftime( mktime(&birthdate) , mktime(&c_birthdate) );
     //signal(SIGINT,&INT_handler);
     //separator(date);
     //fgets(query,64,stdin);
 	//while(query[i] != ' '){i++;}
 	//strncpy(date, query, i*sizeof(char));
-	if(!strcmp("select","select")){
-		printf("sin\n");
+	if(diff == 0){
+		printf("C BON\n");
 	}
     return 0;
 }
