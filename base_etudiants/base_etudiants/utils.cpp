@@ -47,6 +47,7 @@ void log_query(query_result_t* result) {
   } else if (result->status == UNRECOGNISED_FIELD) {
     fprintf(stderr, "Unrecognized field in query %s\n", result->query);
   }
+  free(result->students);
 }
 
 void* create_shared_memory(size_t size) {

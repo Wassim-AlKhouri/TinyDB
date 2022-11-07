@@ -12,7 +12,7 @@ void db_save(database_t *db, const char *path) {
         perror("Could not open the DB file");
         exit(1);
     }
-    if (fwrite(db->data, sizeof(student_t), db->lsize, f) < 0) {
+    if (fwrite(db->data, sizeof(student_t), db->count, f) < 0) {
         perror("Could not write in the DB file");
         exit(1);
     }

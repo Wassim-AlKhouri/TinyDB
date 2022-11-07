@@ -42,29 +42,13 @@ function get_ppids(){
 	PPIDS=("${PPIDS[@]:1}")
 }
 
-function get_allpids(){
-	#fonction qui trouve les PIDs de tous les processus tinydb
-	PIDS=()
-	while IFS= read -r line;do
-		PIDS+=("$line")
-	done < <(ps ef -opid,cmd -C tinydb | grep tinydb | awk '{print $1}')
-}
-
-function get_cpids(){
-	#fonction qui trouve les PIDs des processus fils d'un certain processus
-	CPIDS=()
-	while IFS= read -r line;do
-		CPIDS+=("$line")
-	done < <(pgrep -P $1)
-}
-
 case "$1" in
 	"run")
 		#Lance un processus tinydb
 		DATABASE="data/students.bin"
 		shift
 		parse_args "$@"
-		./tinydb $DATABASE < $QUERIES
+		./tinydb $DATABASE $QUERIES
 		;;
 	"status")
 		#Affiche les PIDs des processus principaux en cours d'exécution
@@ -92,6 +76,10 @@ case "$1" in
 				echo "	Sync process $p..."
 				kill -s USR1 $p
 			done
+			while [ ${#PPIDS[@]} -gt 0 ];do
+				get_ppids
+			done
+			echo "done"
 		fi
 		;;
 	"shutdown")
@@ -102,10 +90,6 @@ case "$1" in
 		#Il se trouve dans la liste des processus principaux.
 			get_ppids
 			if [ " ${PPIDS[*]} " =~ "$2" ];then
-				get_cpids "$2"
-				for p in ${CPIDS[@]};do
-					kill $p
-				done
 				kill $2
 			else
 				echo "$2 is not a parent process of tinydb"
@@ -114,8 +98,8 @@ case "$1" in
 		else
 		#Si l'utilisateur ne donne pas de PID alors on shutdown tous les 
 		#processus tinydb (même les fils)
-			get_allpids
-			for p in ${PIDS[@]};do
+			get_ppids
+			for p in ${PPIDS[@]};do
 				kill $p
 			done
 

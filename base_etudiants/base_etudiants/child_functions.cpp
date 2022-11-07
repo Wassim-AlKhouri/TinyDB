@@ -25,12 +25,9 @@ bool select(int* fd_s,database_t* db){
 		printf("wrong type of query\n");
 		success = false;
 	}else{
-		printf("%s ICI\n", value);
-		printf("%s TOT\n", field);
 		for(int i=0;i<db->count;i++){
 			if(!strcmp(field,"fname")){
 				if(!strcmp(value,db->data[i].fname)){
-					printf("c bon\n");
 					query_result_add(&result,db->data[i]);
 					success = true;
 				}
@@ -47,7 +44,6 @@ bool select(int* fd_s,database_t* db){
 					success = true;
 				}
 			}else if(!strcmp(field,"birthdate")){
-				printf("BIRTHDATE ICI\n");
 				struct tm birthdate;
 				strptime(value,"%d/%m/%Y",&birthdate);
 				if(birthdate.tm_mday == db->data[i].birthdate.tm_mday && birthdate.tm_mon == db->data[i].birthdate.tm_mon && birthdate.tm_year == db->data[i].birthdate.tm_year){
@@ -92,11 +88,11 @@ bool insert(int* fd_i,database_t* db){
 		}
 		if(!exist){
 			db_add(db,new_student);
+			query_result_add(&result,new_student);
 			success = true;
 		}
 	}
 	if(success){
-		query_result_add(&result,new_student);
 		result.status = QUERY_SUCCESS;
 		log_query(&result);
 	}
@@ -181,7 +177,6 @@ bool update(int* fd_u,database_t* db){
 	char* update_value= (char*)malloc(64*sizeof(char));
 	if(!parse_update(result.query + 7,field_filter,value_filter,field_to_update,update_value)){
 			printf("wrong type of query\n");
-			printf("PARSE ER\n");
 			success = false;
 	}else{
 		for(int i=0;i<db->count;i++){

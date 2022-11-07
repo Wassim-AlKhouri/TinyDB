@@ -1,0 +1,2 @@
+Query "delete fname" completed in -1667739287552.000000ms with 1 results.
+Hadrien Legast 864030 info 30/9/1998
