@@ -1,4 +1,0 @@
-Query "update section" completed in -1667852795904.000000ms with 3 results.
-Hadrien INFOM 864030 info 30/9/1998
-Fabienne INFOM 928453 info 6/7/1997
-Anatole INFOM 8492742 info 7/5/1999

@@ -74,33 +74,3 @@ bool parse_selectors(char* query, char* field, char* value) {
     strcpy(value, token);
     return true;
 }
-
-bool parse_birthdate(char* C_birthdate, struct tm* birthdate){
-    int i = 0;
-    char day[3]; char month[3]; char year[64];
-    while(C_birthdate[i] != '/'){
-        day[i] = C_birthdate[i];
-        i++;
-    }
-    day[i] = '\0';
-    int j = i + 1;
-    while(C_birthdate[j] != '/'){
-        month[j-i-1] = C_birthdate[j];
-        j++;
-    }
-    month[j] = '\0';
-    int k = j+1;
-    while(C_birthdate[k] != '\0'){
-        year[k-j-1] = C_birthdate[k];
-        k++;
-    }
-    year[k] = '\0';
-    int int_day; int int_month; int int_year;
-    sscanf(day, "%d", &int_day);
-    sscanf(month, "%d", &int_month);
-    sscanf(year, "%d", &int_year);
-	birthdate->tm_mday = int_day;
-	birthdate->tm_mon = int_month;
-	birthdate->tm_year = int_year;
-    return true;
-}

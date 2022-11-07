@@ -25,6 +25,9 @@ void query_result_add(query_result_t* result, student_t s){
 }
 
 void query_result_resize(query_result_t* result){
+	//on alloue une mémoire qui est plus grand et on copie tous les 
+	//étudiants dedans. Puis on libère la mémoire du 1er malloc et on redirige le pointeur
+	//vers le nouveau.
 	student_t *tmp = (student_t*) malloc( result->psize + (1000 * sizeof(student_t)) );
 	for(int i=0; i<=(int)result->count; i++){
 		tmp[i] = result->students[i];

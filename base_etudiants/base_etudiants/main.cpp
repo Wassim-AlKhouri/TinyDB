@@ -19,7 +19,7 @@
 
 database_t* db = (database_t*)create_shared_memory(sizeof(database_t));
 const char *db_path; 
-int* queries = (int*)create_shared_memory(sizeof(int));
+int* queries = (int*)create_shared_memory(sizeof(int)); // nombre e requêtes en cours
 pid_t pids[5] =  {0,0,0,0,0};
 
 void USR1_handler(int signal){
@@ -121,9 +121,6 @@ int main(int argc, char const *argv[]) {
 		sigaction(SIGUSR1,&usr1,NULL);
 		sigaction(SIGUSR2,&usr2,NULL);
 		sigaction(SIGINT,&int1,NULL);
-		//signal(SIGINT,INT_handler);
-		//signal(SIGUSR1,USR1_handler);
-		//signal(SIGUSR2,USR2_handler);
 		if(close(fd_s[READ])<0 || close(fd_i[READ])<0 || close(fd_d[READ])<0 || close(fd_u[READ])<0){
 			perror("Close pipe failed");
 			exit(0);
@@ -137,33 +134,37 @@ int main(int argc, char const *argv[]) {
 			strncpy(query_type, query, i);
 			printf("%s\n",query_type);
 			if(!strcmp(query_type,"select")){
+				// envois du requête de type "select" vers le processus dédié
 				printf("Running query '%s'\n",query);
 				safe_write(fd_s[WRITE],&query,256*sizeof(char));
 			}else if(!strcmp(query_type,"insert")){
+				// envois du requête de type "insert" vers le processus dédié
 				printf("Running query '%s'\n",query);
 				safe_write(fd_i[WRITE],&query,256*sizeof(char));
 				*queries +=1;
 			}else if(!strcmp(query_type,"delete")){
+				// envois du requête de type "delete" vers le processus dédié
 				printf("Running query '%s'\n",query);
 				safe_write(fd_d[WRITE],&query,256*sizeof(char));
 				*queries +=1;
 			}else if(!strcmp(query_type,"update")){
+				// envois du requête de type "update" vers le processus dédié
 				printf("Running query '%s'\n",query);
 				safe_write(fd_u[WRITE],&query,256*sizeof(char));
 				*queries +=1;
 			}else if(!strcmp(query_type,"transaction")){
+				// attente jusqu'à la fin de tous les requêtes
 				while(*queries > 0){sleep(1);}
 				printf("queries done\n");
 			}else{
-				printf("demande mal formée ICI\n");
+				printf("demande mal formée\n");
 			}
 		}
-		printf("Waiting for requests to terminate...ICICICI\n");
+		printf("Waiting for requests to terminate...\n");
 		while(*queries > 0){sleep(1);}
-		printf("Commiting database changes to the disk...CICICICI\n");
+		printf("Commiting database changes to the disk...\n");
 		db_save(db,db_path);
-		printf("TOTOTOTOT\n");
-		for(int i=1;i<5;i++){kill(pids[i],SIGINT);printf("KILL\n");}
+		for(int i=1;i<5;i++){kill(pids[i],SIGINT);}
 		munmap(queries,sizeof(int));
 		munmap(db->data,db->psize);
 		munmap(db,sizeof(database_t));

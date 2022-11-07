@@ -44,14 +44,14 @@ void db_add(database_t *db, student_t student) {
 		db_resize(db);
 	}
 	db->data[db->count] = student;
-	//printf("%s,%s,%u,%s,%d/%d/%d\n", student.fname, student.lname, student.id, student.section, student.birthdate.tm_mday, student.birthdate.tm_mon, student.birthdate.tm_year);
 	db->lsize = db->lsize + sizeof(student_t);
 	db->count = db->count + 1;
 }
 
 void db_remove(database_t *db, student_t s){
 	//on commence par trouver la position de l'étudiant dans la liste.
-	//Puis on copie l'étudiant d'après 
+	//Puis on copie l'étudiant suivant sur la position actuel et on fais
+	//ceci en boucle jusqu'à la fin de la liste.
 	int i=0;
 	for(int k=0;k<db->count;k++){
 		if(student_equals(&db->data[k],&s)){i=k;}

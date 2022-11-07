@@ -1,2 +1,0 @@
-Query "select fname" completed in -1667750952960.000000ms with 1 results.
-Hadrien Legast 864030 info 30/9/1998

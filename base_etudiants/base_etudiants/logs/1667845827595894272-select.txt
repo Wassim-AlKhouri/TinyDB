@@ -1,2 +1,0 @@
-Query "select fname" completed in -1667751346176.000000ms with 1 results.
-Anatole Lanegris 8492742 info 7/5/1999
