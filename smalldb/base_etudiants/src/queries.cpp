@@ -1,6 +1,6 @@
 #include "queries.hpp"
 
-#include "io.hpp"
+//#include "io.hpp"
 
 // execute_* ///////////////////////////////////////////////////////////////////
 
@@ -65,7 +65,8 @@ void parse_and_execute_select(FILE* fout, database_t* db, const char* const quer
   int  counter;
   if (sscanf(query, "select %31[^=]=%63s%n", ffield, fvalue, &counter) != 2) {
     query_fail_bad_format(fout, "select");
-  } else if (static_cast<unsigned>(counter) < strlen(query)) {
+  } else if (static_cast<unsigned>(counter) < strlen(query) && false) {
+    printf("%li\n",strlen(query));
     query_fail_too_long(fout, "select");
   } else {
     execute_select(fout, db, ffield, fvalue);
@@ -129,17 +130,22 @@ void parse_and_execute(FILE* fout, database_t* db, const char* const query) {
 // query_fail_* ///////////////////////////////////////////////////////////////
 
 void query_fail_bad_query_type(FILE* const fout) {
+printf("1\n");
 }
 
 void query_fail_bad_format(FILE* const fout, const char * const query_type) {
+printf("2\n");
 }
 
 void query_fail_too_long(FILE* const fout, const char * const query_type) {
+printf("3,%s\n",query_type);
 }
 
 void query_fail_bad_filter(FILE* const fout, const char* const field, const char* const filter) {
+printf("4\n");
 }
 
 void query_fail_bad_update(FILE* const fout, const char* const field, const char* const filter) {
+printf("5\n");
 }
 

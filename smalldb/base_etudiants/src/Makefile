@@ -1,10 +1,11 @@
-CXXFLAGS+=-std=c++17 -g -Wall -Wextra -Wpedantic -D_GNU_SOURCE -Werror=all
+CXXFLAGS+=
+#CXXFLAGS+=-std=c++17 -g -Wall -Wextra -Wpedantic -D_GNU_SOURCE -Werror=all
 #CXX=g++
 LDLIBS+=-lpthread
 SOURCES = $(wildcard *.cpp */*.cpp)
 HEADERS = $(wildcard *.hpp */*.hpp)
 
-OBJ=db.o student.o
+OBJ=db.o student.o common.o queries.o
 
 .PHONY: main
 main: smalldb check run
