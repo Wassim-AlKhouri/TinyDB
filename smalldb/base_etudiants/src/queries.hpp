@@ -2,6 +2,8 @@
 #define _QUERIES_HPP
 
 #include <cstdio>
+#include <fstream>
+#include <iostream>
 
 #include "db.hpp"
 

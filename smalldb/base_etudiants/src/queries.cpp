@@ -1,5 +1,5 @@
 #include "queries.hpp"
-
+using namespace std;
 //#include "io.hpp"
 
 // execute_* ///////////////////////////////////////////////////////////////////
@@ -13,6 +13,7 @@ void execute_select(FILE* fout, database_t* const db, const char* const field,
   }
   for (const student_t& s : db->data) {
     if (predicate(s)) {
+      fout << s << endl;
     }
   }
 }
