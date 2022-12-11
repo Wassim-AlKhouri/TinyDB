@@ -16,11 +16,37 @@ void* f(void * ptr){
   char query[1024];
   char result[1024];
   while(read(args->socket,query,1024)){
-    parse_and_execute(stdout,args->db,query);
-    printf("ICI4\n");
-    fgets(result, 1024, stdout);//rajouter test
-    printf("ICI3\n");
-    write(args->socket, result, sizeof(result));
+    FILE* tmp = tmpfile();
+    //student_t s;
+    char buff[1024];
+    parse_and_execute(tmp,args->db,query);
+    rewind(tmp);
+    int type;
+    fread(&type,sizeof(int),1,tmp);
+    write(args->socket,&type,sizeof(int));
+    switch (type)
+    {
+    case 0:
+      break;
+
+    case 1:
+      int len;
+      fread(&len,sizeof(int),1,tmp);
+      write(args->socket, &len, sizeof(int));
+      for (int i = 0; i < len; i++)
+      {
+        student_t s;
+        fread(&s,sizeof(student_t),1,tmp);
+        write(args->socket, &s, sizeof(student_t));
+      }
+      break;
+    
+    default:
+      break;
+    }
+    //fread(&s,sizeof(student_t),1,tmp);
+    //printf("ICI3\n");
+    //write(args->socket, &s, sizeof(student_t));
   };
   close(args->socket);
   return NULL;
@@ -43,9 +69,8 @@ int main(int argc, char const* argv[]) {
   listen(server_fd, 3);
   size_t addrlen = sizeof(address);
   while(true){
-    printf("ICI2\n");
     int new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
-    printf("ICI\n");
+    printf("client %i connecté\n",new_socket);
     pthread_t new_thread;
     thread_args_t args;
     args.socket = new_socket;

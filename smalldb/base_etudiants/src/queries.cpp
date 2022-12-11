@@ -11,11 +11,22 @@ void execute_select(FILE* fout, database_t* const db, const char* const field,
     query_fail_bad_filter(fout, field, value);
     return;
   }
+  int o = 1;
+  fwrite(&o,sizeof(int),1,fout);
+  int i=0;
+  vector<student_t>selected_students;
   for (const student_t& s : db->data) {
     if (predicate(s)) {
-      fout << s << endl;
+      selected_students.push_back(s);
+      //fwrite(&s,sizeof(student_t),1,fout);
+      i++;
     }
   }
+  fwrite(&i,sizeof(int),1,fout);
+  for (const student_t& s2:selected_students ){
+    fwrite(&s2,sizeof(student_t),1,fout);
+  }
+
 }
 
 void execute_update(FILE* fout, database_t* const db, const char* const ffield, const char* const fvalue, const char* const efield, const char* const evalue) {

@@ -46,6 +46,9 @@ int _checked(int ret, char* calling_function) {
   return ret;
 }
 */
+void safe_size(size_t s);
+void safe_int(int i);
+void safe_char(char* s);
 // The macro allows us to retrieve the name of the calling function
 #define checked(call) _checked(call, #call)
 #endif  // _COMMON_HPP

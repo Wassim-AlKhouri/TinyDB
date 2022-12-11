@@ -11,6 +11,7 @@
 #include <signal.h>
 
 #include "common.hpp"
+#include "student.hpp"
 
 int main(void) {
   // Permet que write() retourne 0 en cas de réception
@@ -31,31 +32,53 @@ int main(void) {
   connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
   
   char buffer[1024];
+  
   int longueur, i, ret;
   
   while (fgets(buffer, 1024, stdin) != NULL) {
-     longueur = strlen(buffer) + 1;
-     printf("Envoi...\n");
-     write(sock, buffer, strlen(buffer) + 1);
-     //checked(write(sock, buffer, strlen(buffer) + 1));
-     
-     i = 0;
-     while (i < longueur) {
-        ret = read(sock, buffer, longueur - i);
-        if (ret <= 0) {
-           if (ret < 0)
-              perror("read");
-           else
-              printf("Déconnexion du serveur.\n");
-           return 1;
-        }
-        
-        i += ret;
-     }
-     
-     printf("Recu : %s\n", buffer);
-  }
-  
+      longueur = strlen(buffer) + 1;
+      printf("Envoi...\n");
+      write(sock, buffer, strlen(buffer) + 1);
+      //checked(write(sock, buffer, strlen(buffer) + 1));
+      int type;
+      read(sock,&type,sizeof(int));
+      switch (type)
+      {
+      case 0:
+         // In case of error (syntax,...)
+         size_t len;
+         char buff[1024];
+         read(sock,&len,sizeof(size_t));
+         read(sock,&buff,len);
+         printf("%s\n",buff);
+         break;
+      case 1:
+         // select
+         int l;
+         read(sock,&l,sizeof(int));
+         for (int i = 0; i < l; i++)
+         {
+            student_t s;
+            char buff[1024];
+            read(sock, &s, sizeof(student_t));
+            student_to_str(buff,&s,1024);
+            printf("%s\n",buff);
+         }
+         break;
+      
+      default:
+         perror("Unknown type");
+         exit(1);
+         break;
+      }
+
+      student_t s;
+      i = 0;
+      read(sock, &s, sizeof(student_t));
+      char buff[1024];
+      student_to_str(buff,&s,1024);
+      printf("%s\n",buff);
+   }
   close(sock);
   return 0;
 }
