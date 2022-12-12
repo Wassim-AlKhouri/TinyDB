@@ -39,7 +39,20 @@ int main(void) {
       longueur = strlen(buffer) + 1;
       printf("Envoi...\n");
       write(sock, buffer, strlen(buffer) + 1);
+      char c;
+      int i=0;
+      char buff[1024];
+      while(read(sock,&c,sizeof(char)) > 0 && c != '\0'){
+         //printf("%c\n",c);
+         //printf("pas fini\n");
+         buff[i] = c;
+         i++;
+      }
+      buff[i] = '\0';
+      printf("%s\n",buff);
+      printf("finfi\n");
       //checked(write(sock, buffer, strlen(buffer) + 1));
+      /*
       int type;
       read(sock,&type,sizeof(int));
       switch (type)
@@ -78,6 +91,7 @@ int main(void) {
       char buff[1024];
       student_to_str(buff,&s,1024);
       printf("%s\n",buff);
+      */
    }
   close(sock);
   return 0;

@@ -16,11 +16,12 @@ void* f(void * ptr){
   char query[1024];
   char result[1024];
   while(read(args->socket,query,1024)){
-    FILE* tmp = tmpfile();
+    //FILE* tmp = tmpfile();
+    //FILE* stream = fdopen(args->socket,"w");
     //student_t s;
     char buff[1024];
-    parse_and_execute(tmp,args->db,query);
-    rewind(tmp);
+    parse_and_execute(args->socket,args->db,query);
+    /*
     int type;
     fread(&type,sizeof(int),1,tmp);
     write(args->socket,&type,sizeof(int));
@@ -47,6 +48,7 @@ void* f(void * ptr){
     //fread(&s,sizeof(student_t),1,tmp);
     //printf("ICI3\n");
     //write(args->socket, &s, sizeof(student_t));
+    */
   };
   close(args->socket);
   return NULL;
