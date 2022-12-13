@@ -29,6 +29,7 @@ void execute_select(int fout, database_t* const db, const char* const field,
 
 void execute_update(int fout, database_t* const db, const char* const ffield, const char* const fvalue, const char* const efield, const char* const evalue) {
   std::function<bool(const student_t&)> predicate = get_filter(ffield, fvalue);
+  printf("ok \n");
   if (!predicate) {
     query_fail_bad_filter(fout, ffield, fvalue);
     return;
@@ -106,7 +107,7 @@ void parse_and_execute_update(int fout, database_t* db, const char* const query)
   if (sscanf(query, "update %31[^=]=%63s set %31[^=]=%63s%n", ffield, fvalue, efield, evalue,
              &counter) != 4) {
     query_fail_bad_format(fout, "update");
-  } else if (static_cast<unsigned>(counter) < strlen(query)) {
+  } else if (static_cast<unsigned>(counter) < strlen(query) && false) {
     query_fail_too_long(fout, "update");
   } else {
     execute_update(fout, db, ffield, fvalue, efield, evalue);
@@ -120,7 +121,7 @@ void parse_and_execute_insert(int fout, database_t* db, const char* const query)
   int       counter;
   if (sscanf(query, "insert %63s %63s %u %63s %10s%n", fname, lname, &id, section, date, &counter) != 5 || strptime(date, "%d/%m/%Y", &birthdate) == NULL) {
     query_fail_bad_format(fout, "insert");
-  } else if (static_cast<unsigned>(counter) < strlen(query)) {
+  } else if (static_cast<unsigned>(counter) < strlen(query) && false) {
     query_fail_too_long(fout, "insert");
   } else {
     execute_insert(fout, db, fname, lname, id, section, birthdate);
@@ -132,7 +133,8 @@ void parse_and_execute_delete(int fout, database_t* db, const char* const query)
   int counter;
   if (sscanf(query, "delete %31[^=]=%63s%n", ffield, fvalue, &counter) != 2) {
     query_fail_bad_format(fout, "delete");
-  } else if (static_cast<unsigned>(counter) < strlen(query)) {
+  } else if (static_cast<unsigned>(counter) < strlen(query) && false) {
+    printf("%s\n", query);
     query_fail_too_long(fout, "delete");
   } else {
     execute_delete(fout, db, ffield, fvalue);
@@ -149,6 +151,7 @@ void parse_and_execute(int fout, database_t* db, const char* const query) {
   } else if (strncmp("delete", query, sizeof("delete")-1) == 0) {
     parse_and_execute_delete(fout, db, query);
   } else {
+    printf("%s\n", query);
     query_fail_bad_query_type(fout);
   }
 }
@@ -172,19 +175,19 @@ int parse(const char* const query) {
 // query_fail_* ///////////////////////////////////////////////////////////////
 
 void query_fail_bad_query_type(int fout) {
-printf("1\n");
+printf("Bad Query\n");
 }
 
 void query_fail_bad_format(int fout, const char * const query_type) {
-printf("2\n");
+printf("Bad Format\n");
 }
 
 void query_fail_too_long(int fout, const char * const query_type) {
-printf("3,%s\n",query_type);
+printf("Too Long,%s\n",query_type);
 }
 
 void query_fail_bad_filter(int fout, const char* const field, const char* const filter) {
-printf("4\n");
+printf("Bad Filter\n");
 }
 
 void query_fail_bad_update(int fout, const char* const field, const char* const filter) {
