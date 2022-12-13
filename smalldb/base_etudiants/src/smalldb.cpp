@@ -15,6 +15,7 @@ void* f(void * ptr){
   thread_args_t* args = (thread_args_t*) ptr;
   char query[1024];
   char result[1024];
+  printf("%i\n", args->socket);
   while(read(args->socket,query,1024)){
 
     int type = parse(query);
@@ -22,6 +23,7 @@ void* f(void * ptr){
     switch (type)
     {
     case 0: //writer
+    
       pthread_mutex_lock(args->new_access_mutex);
       pthread_mutex_lock(args->write_access_mutex);
       pthread_mutex_unlock(args->new_access_mutex);

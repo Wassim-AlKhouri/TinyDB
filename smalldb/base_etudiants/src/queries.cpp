@@ -22,7 +22,7 @@ void execute_select(int fout, database_t* const db, const char* const field,
       delete(buffer);
     }
   }
-  char end[50] = "(X) student(s) selected \0";
+  char end[50] = "(X) student(s) selected \n\0";
   end[1] = i +  '0';
   write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
@@ -46,7 +46,7 @@ void execute_update(int fout, database_t* const db, const char* const ffield, co
       i++;
     }
   }
-  char end[50] = "(X) student(s) updated \0";
+  char end[50] = "(X) student(s) updated \n\0";
   end[1] = i +  '0';
   write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
@@ -55,6 +55,7 @@ void execute_insert(int fout, database_t* const db, const char* const fname,
                     const char* const lname, const unsigned id, const char* const section,
                     const tm birthdate) {
   db->data.emplace_back();
+
   student_t *s = &db->data.back();
   s->id = id;
   snprintf(s->fname, sizeof(s->fname), "%s", fname);
@@ -63,8 +64,9 @@ void execute_insert(int fout, database_t* const db, const char* const fname,
   s->birthdate = birthdate;
   char buffer[1024];
   student_to_str(buffer,s,1024);
-  buffer[strlen(buffer)]='\0';
-  write(fout,buffer,(strlen(buffer)+1)*sizeof(char));
+  buffer[strlen(buffer)]='\n';
+  buffer[strlen(buffer)+1]='\0';
+  write(fout,buffer,(strlen(buffer)+2)*sizeof(char));
   //write(fout,"\n \0",(strlen(buffer)+1)*sizeof(char));
 }
 
@@ -80,7 +82,7 @@ void execute_delete(int fout, database_t* const db, const char* const field,
   db->data.erase(new_end, db->data.end());
   int new_length = db->data.size();
   int deleted_students = length - new_length;
-  char end[50] = "(X) student(s) deleted \0";
+  char end[50] = "(X) student(s) deleted \n \0";
   end[1] = deleted_students +  '0';
   write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
@@ -92,7 +94,8 @@ void parse_and_execute_select(int fout, database_t* db, const char* const query)
   int  counter;
   if (sscanf(query, "select %31[^=]=%63s%n", ffield, fvalue, &counter) != 2) {
     query_fail_bad_format(fout, "select");
-  } else if (static_cast<unsigned>(counter) < strlen(query) && false) {
+  } else if (static_cast<unsigned>(counter+1) < strlen(query)) {
+    printf("%i\n", counter);
     printf("%li\n",strlen(query));
     query_fail_too_long(fout, "select");
   } else {
@@ -107,7 +110,7 @@ void parse_and_execute_update(int fout, database_t* db, const char* const query)
   if (sscanf(query, "update %31[^=]=%63s set %31[^=]=%63s%n", ffield, fvalue, efield, evalue,
              &counter) != 4) {
     query_fail_bad_format(fout, "update");
-  } else if (static_cast<unsigned>(counter) < strlen(query) && false) {
+  } else if (static_cast<unsigned>(counter+1) < strlen(query) ) {
     query_fail_too_long(fout, "update");
   } else {
     execute_update(fout, db, ffield, fvalue, efield, evalue);
@@ -121,7 +124,7 @@ void parse_and_execute_insert(int fout, database_t* db, const char* const query)
   int       counter;
   if (sscanf(query, "insert %63s %63s %u %63s %10s%n", fname, lname, &id, section, date, &counter) != 5 || strptime(date, "%d/%m/%Y", &birthdate) == NULL) {
     query_fail_bad_format(fout, "insert");
-  } else if (static_cast<unsigned>(counter) < strlen(query) && false) {
+  } else if (static_cast<unsigned>(counter+1) < strlen(query) ) {
     query_fail_too_long(fout, "insert");
   } else {
     execute_insert(fout, db, fname, lname, id, section, birthdate);
@@ -133,7 +136,7 @@ void parse_and_execute_delete(int fout, database_t* db, const char* const query)
   int counter;
   if (sscanf(query, "delete %31[^=]=%63s%n", ffield, fvalue, &counter) != 2) {
     query_fail_bad_format(fout, "delete");
-  } else if (static_cast<unsigned>(counter) < strlen(query) && false) {
+  } else if (static_cast<unsigned>(counter+1) < strlen(query) ) {
     printf("%s\n", query);
     query_fail_too_long(fout, "delete");
   } else {
@@ -191,6 +194,6 @@ printf("Bad Filter\n");
 }
 
 void query_fail_bad_update(int fout, const char* const field, const char* const filter) {
-printf("5\n");
+printf("Bad Update\n");
 }
 
