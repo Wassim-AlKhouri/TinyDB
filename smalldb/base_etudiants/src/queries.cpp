@@ -14,11 +14,12 @@ void execute_select(int fout, database_t* const db, const char* const field,
   int i=0;
   for (const student_t& s : db->data) {
     if (predicate(s)) {
-      char buffer[1024];
+      char* buffer = new char[1024];
       i++;
       student_to_str(buffer,&s,1024),
-      buffer[strlen(buffer)] = '\n';
       write(fout,buffer,strlen(buffer));
+      write(fout,"\n",sizeof(char));
+      delete(buffer);
     }
   }
   char end[50] = "(X) student(s) selected \0";

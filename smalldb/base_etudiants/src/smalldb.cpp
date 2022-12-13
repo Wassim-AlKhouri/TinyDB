@@ -16,10 +16,11 @@ void* f(void * ptr){
   char query[1024];
   char result[1024];
   while(read(args->socket,query,1024)){
+    //printf("demande recu :%s\n",query);
     //FILE* tmp = tmpfile();
     //FILE* stream = fdopen(args->socket,"w");
     //student_t s;
-    char buff[1024];
+    //char buff[1024];
     parse_and_execute(args->socket,args->db,query);
     /*
     int type;

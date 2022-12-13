@@ -41,16 +41,16 @@ int main(void) {
       write(sock, buffer, strlen(buffer) + 1);
       char c;
       int i=0;
-      char buff[1024];
+      //char buff[1024];
       while(read(sock,&c,sizeof(char)) > 0 && c != '\0'){
-         //printf("%c\n",c);
+         printf("%c",c);
          //printf("pas fini\n");
-         buff[i] = c;
+         //buff[i] = c;
          i++;
       }
-      buff[i] = '\0';
-      printf("%s\n",buff);
-      printf("finfi\n");
+      //buff[i] = '\0';
+      //printf("%s\n",buff);
+      printf("finfi\n\n");
       //checked(write(sock, buffer, strlen(buffer) + 1));
       /*
       int type;
