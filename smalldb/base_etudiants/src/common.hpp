@@ -12,6 +12,11 @@
 typedef struct{
     int socket;
     database_t* db;
+    pthread_mutex_t* new_access_mutex;
+    pthread_mutex_t* write_access_mutex;
+    pthread_mutex_t* reader_registration_mutex;
+    int readers = 0;
+
 } thread_args_t;
 /*
     Creates a socket while checking the return value

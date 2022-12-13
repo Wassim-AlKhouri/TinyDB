@@ -16,12 +16,44 @@ void* f(void * ptr){
   char query[1024];
   char result[1024];
   while(read(args->socket,query,1024)){
+
+    int type = parse(query);
+
+    switch (type)
+    {
+    case 0: //writer
+      pthread_mutex_lock(args->new_access_mutex);
+      pthread_mutex_lock(args->write_access_mutex);
+      pthread_mutex_unlock(args->new_access_mutex);
+      parse_and_execute(args->socket, args->db, query);
+      pthread_mutex_unlock(args->write_access_mutex);
+      break;
+
+    case 1: //reader
+      pthread_mutex_lock(args->new_access_mutex);
+      pthread_mutex_lock(args->reader_registration_mutex);
+      if (args->readers == 0){pthread_mutex_lock(args->write_access_mutex);}
+      args->readers++;
+      pthread_mutex_unlock(args->new_access_mutex);
+      pthread_mutex_unlock(args->reader_registration_mutex);
+      parse_and_execute(args->socket, args->db, query);
+      pthread_mutex_lock(args->reader_registration_mutex);
+      args->readers--;
+      if (args->readers == 0){pthread_mutex_unlock(args->write_access_mutex);}
+      pthread_mutex_unlock(args->reader_registration_mutex);
+      break;
+    
+    default:
+      query_fail_bad_query_type(args->socket);
+      break;
+    }
+
     //printf("demande recu :%s\n",query);
     //FILE* tmp = tmpfile();
     //FILE* stream = fdopen(args->socket,"w");
     //student_t s;
     //char buff[1024];
-    parse_and_execute(args->socket,args->db,query);
+    //parse_and_execute(args->socket,args->db,query);
     /*
     int type;
     fread(&type,sizeof(int),1,tmp);
@@ -60,6 +92,13 @@ int main(int argc, char const* argv[]) {
   const char* path = argv[1];
   database_t* db = new database_t;
   db_load(db,path);
+
+  pthread_mutex_t new_access_mutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_mutex_t write_access_mutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_mutex_t reader_registration_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+
+
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
   int opt = 1;
   setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
@@ -75,9 +114,13 @@ int main(int argc, char const* argv[]) {
     int new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
     printf("client %i connecté\n",new_socket);
     pthread_t new_thread;
-    thread_args_t args;
-    args.socket = new_socket;
-    args.db = db;
+    thread_args_t args = {
+      .socket = new_socket,
+      .db = db,
+      .new_access_mutex = &new_access_mutex,
+      .write_access_mutex = &write_access_mutex,
+      .reader_registration_mutex = &reader_registration_mutex
+    };
     pthread_create(&new_thread, NULL, f, &args);
   }
   

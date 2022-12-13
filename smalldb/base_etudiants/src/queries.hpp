@@ -34,6 +34,8 @@ void parse_and_execute_delete(int fout, database_t* db, const char* const query)
 
 void parse_and_execute(int fout, database_t* db, const char* const query);
 
+int parse(const char* const query);
+
 // query_fail_* ///////////////////////////////////////////////////////////////
 
 /** Those methods write a descriptive error message on fout */

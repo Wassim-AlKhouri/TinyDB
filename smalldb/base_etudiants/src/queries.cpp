@@ -63,7 +63,8 @@ void execute_insert(int fout, database_t* const db, const char* const fname,
   char buffer[1024];
   student_to_str(buffer,s,1024);
   buffer[strlen(buffer)]='\0';
-  write(fout,buffer,(strlen(buffer)+1)*sizeof(buffer));
+  write(fout,buffer,(strlen(buffer)+1)*sizeof(char));
+  //write(fout,"\n \0",(strlen(buffer)+1)*sizeof(char));
 }
 
 void execute_delete(int fout, database_t* const db, const char* const field,
@@ -150,6 +151,22 @@ void parse_and_execute(int fout, database_t* db, const char* const query) {
   } else {
     query_fail_bad_query_type(fout);
   }
+}
+
+int parse(const char* const query) {
+  int i;
+  if (strncmp("select", query, sizeof("select")-1) == 0) {
+    i = 1;
+  } else if (strncmp("update", query, sizeof("update")-1) == 0) {
+    i = 0;
+  } else if (strncmp("insert", query, sizeof("insert")-1) == 0) {
+    i = 0;
+  } else if (strncmp("delete", query, sizeof("delete")-1) == 0) {
+    i = 0;
+  } else {
+    i = -1;
+  }
+  return i;
 }
 
 // query_fail_* ///////////////////////////////////////////////////////////////
