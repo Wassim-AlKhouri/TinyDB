@@ -34,8 +34,6 @@ int main(void) {
   char buffer[1024];
   
   int longueur, i, ret;
-  //char null;
-  //size_t test = 1;
 
   while (fgets(buffer, 1024, stdin) != NULL) {
       //test = recv(sock, &null, sizeof(char),MSG_PEEK) ;
@@ -45,56 +43,17 @@ int main(void) {
       char c;
       int i=0;
       //char buff[1024];
-      while(recv(sock,&c,sizeof(char),0) > 0 && c != '\0'){
+      size_t test = 1; 
+      while(test = read(sock,&c,sizeof(char)) > 0 && c != '\0'){
          printf("%c",c);
-         //printf("pas fini\n");
-         //buff[i] = c;
          i++;
       }
-      //buff[i] = '\0';
-      //printf("%s\n",buff);
-      printf("finfi\n\n");
-      //checked(write(sock, buffer, strlen(buffer) + 1));
-      /*
-      int type;
-      read(sock,&type,sizeof(int));
-      switch (type)
-      {
-      case 0:
-         // In case of error (syntax,...)
-         size_t len;
-         char buff[1024];
-         read(sock,&len,sizeof(size_t));
-         read(sock,&buff,len);
-         printf("%s\n",buff);
-         break;
-      case 1:
-         // select
-         int l;
-         read(sock,&l,sizeof(int));
-         for (int i = 0; i < l; i++)
-         {
-            student_t s;
-            char buff[1024];
-            read(sock, &s, sizeof(student_t));
-            student_to_str(buff,&s,1024);
-            printf("%s\n",buff);
-         }
-         break;
-      
-      default:
-         perror("Unknown type");
-         exit(1);
-         break;
+      if (test == 0){
+         printf("Server has disconnected\n");
+         exit(0);
       }
-
-      student_t s;
-      i = 0;
-      read(sock, &s, sizeof(student_t));
-      char buff[1024];
-      student_to_str(buff,&s,1024);
-      printf("%s\n",buff);
-      */
+      else if(test < 0){perror("[-]Error while reading in the socket.");} 
+      printf("finfi\n\n");
    }
   close(sock);
   return 0;

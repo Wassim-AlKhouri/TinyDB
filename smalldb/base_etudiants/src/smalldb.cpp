@@ -6,100 +6,110 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <csignal>
+#include <iostream>
+#include <atomic>
+
 
 #include "db.hpp"
 #include "queries.hpp"
 #include "student.hpp"
 #include "common.hpp"
+
+void handler(int sig){
+  if(sig == SIGINT){
+
+  }else if(sig == SIGUSR1){
+
+  }
+}
+
+
 void* f(void * ptr){
   thread_args_t* args = (thread_args_t*) ptr;
   char query[1024];
   char result[1024];
   printf("%i\n", args->socket);
-  while(read(args->socket,query,1024)){
+  size_t test = 1;
+  while(test > 0){
+    test = read(args->socket,query,1024);
+    if(test>0){
+      int type = parse(query);
+      switch (type){
+      case 0: //writer
+      
+        pthread_mutex_lock(args->new_access_mutex);
+        pthread_mutex_lock(args->write_access_mutex);
+        pthread_mutex_unlock(args->new_access_mutex);
+        parse_and_execute(args->socket, args->db, query);
+        pthread_mutex_unlock(args->write_access_mutex);
+        break;
 
-    int type = parse(query);
-
-    switch (type)
-    {
-    case 0: //writer
-    
-      pthread_mutex_lock(args->new_access_mutex);
-      pthread_mutex_lock(args->write_access_mutex);
-      pthread_mutex_unlock(args->new_access_mutex);
-      parse_and_execute(args->socket, args->db, query);
-      pthread_mutex_unlock(args->write_access_mutex);
-      break;
-
-    case 1: //reader
-      pthread_mutex_lock(args->new_access_mutex);
-      pthread_mutex_lock(args->reader_registration_mutex);
-      if (args->readers == 0){pthread_mutex_lock(args->write_access_mutex);}
-      args->readers++;
-      pthread_mutex_unlock(args->new_access_mutex);
-      pthread_mutex_unlock(args->reader_registration_mutex);
-      parse_and_execute(args->socket, args->db, query);
-      pthread_mutex_lock(args->reader_registration_mutex);
-      args->readers--;
-      if (args->readers == 0){pthread_mutex_unlock(args->write_access_mutex);}
-      pthread_mutex_unlock(args->reader_registration_mutex);
-      break;
-    
-    default:
-      query_fail_bad_query_type(args->socket);
-      break;
-    }
-
-    //printf("demande recu :%s\n",query);
-    //FILE* tmp = tmpfile();
-    //FILE* stream = fdopen(args->socket,"w");
-    //student_t s;
-    //char buff[1024];
-    //parse_and_execute(args->socket,args->db,query);
-    /*
-    int type;
-    fread(&type,sizeof(int),1,tmp);
-    write(args->socket,&type,sizeof(int));
-    switch (type)
-    {
-    case 0:
-      break;
-
-    case 1:
-      int len;
-      fread(&len,sizeof(int),1,tmp);
-      write(args->socket, &len, sizeof(int));
-      for (int i = 0; i < len; i++)
-      {
-        student_t s;
-        fread(&s,sizeof(student_t),1,tmp);
-        write(args->socket, &s, sizeof(student_t));
+      case 1: //reader
+        pthread_mutex_lock(args->new_access_mutex);
+        pthread_mutex_lock(args->reader_registration_mutex);
+        if (args->socket,args->readers->load() == 0){pthread_mutex_lock(args->write_access_mutex);}
+        args->socket,args->readers->fetch_add(1);
+        pthread_mutex_unlock(args->new_access_mutex);
+        pthread_mutex_unlock(args->reader_registration_mutex);
+        parse_and_execute(args->socket, args->db, query);
+        pthread_mutex_lock(args->reader_registration_mutex);
+        args->socket,args->readers->fetch_sub(1);
+        if (args->readers == 0){pthread_mutex_unlock(args->write_access_mutex);}
+        pthread_mutex_unlock(args->reader_registration_mutex);
+        break;
+      
+      case -1:
+        query_fail_bad_query_type(args->socket);
+        break;
       }
-      break;
-    
-    default:
-      break;
     }
-    //fread(&s,sizeof(student_t),1,tmp);
-    //printf("ICI3\n");
-    //write(args->socket, &s, sizeof(student_t));
-    */
   };
-  close(args->socket);
-  return NULL;
+  if (test == 0){
+      printf("Client %i disconnected (normal). Closing connection and thread\n",args->socket);
+      close(args->socket);
+      delete(args);
+      return NULL;
+  }
+  else{
+    printf("Lost connection to client %i\n",args->socket);
+    printf("Closing connection\n");
+    close(args->socket);
+    delete(args);
+    printf("Closing thread for connection %i\n",args->socket);
+    return NULL;
+  }
 }
+
+
 int main(int argc, char const* argv[]) {
-  //signal(SIGPIPE, SIG_IGN);
-  if(argc < 2){printf("A path to the database is needed\n");exit(1);}
+  static volatile int* queries = new int[1];
+  // Checks usage
+  if(argc != 2){printf("Wrong usage.\n try smalldb [<path_to_the_database>]\n");exit(1);}
   const char* path = argv[1];
+
+  // Loads database
   database_t* db = new database_t;
   db_load(db,path);
 
+  // Set up signal handler 
+  struct sigaction action;
+  action.sa_handler = handler;
+  sigemptyset(&action.sa_mask);
+  action.sa_flags =0;
+  sigaction(SIGUSR1,&action,NULL);
+
+  // Set up masks
+  sigset_t mask;
+  sigemptyset(&mask);
+  sigaddset(&mask,SIGUSR1);
+  sigaddset(&mask,SIGINT);
+
+  // Creat the three mutex needed and readers
   pthread_mutex_t new_access_mutex = PTHREAD_MUTEX_INITIALIZER;
   pthread_mutex_t write_access_mutex = PTHREAD_MUTEX_INITIALIZER;
   pthread_mutex_t reader_registration_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-
+  //int* readers = new int[1];
+  std::atomic<int> readers(0);
 
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
   int opt = 1;
@@ -116,16 +126,22 @@ int main(int argc, char const* argv[]) {
     int new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
     printf("client %i connecté\n",new_socket);
     pthread_t new_thread;
-    thread_args_t args = {
-      .socket = new_socket,
-      .db = db,
-      .new_access_mutex = &new_access_mutex,
-      .write_access_mutex = &write_access_mutex,
-      .reader_registration_mutex = &reader_registration_mutex
-    };
-    pthread_create(&new_thread, NULL, f, &args);
+    thread_args_t *args = new thread_args_t;
+    args->socket = new_socket;
+    args->db = db;
+    args->new_access_mutex = &new_access_mutex;
+    args->write_access_mutex = &write_access_mutex;
+    args->reader_registration_mutex = &reader_registration_mutex;
+    args->readers = &readers;
+    // Block signal
+    sigprocmask(SIG_BLOCK,&mask,NULL);
+
+    // Create thread
+    pthread_create(&new_thread, NULL, f, args);
+
+    // Unblock signal
+    sigprocmask(SIG_UNBLOCK,&mask,NULL);
   }
-  
   close(server_fd);
   delete(db);
   return 0;

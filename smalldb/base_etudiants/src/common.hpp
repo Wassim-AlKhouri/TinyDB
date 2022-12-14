@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <iostream>
+#include <pthread.h>
+#include <atomic>
 
 #include "db.hpp"
 /*
@@ -15,8 +18,7 @@ typedef struct{
     pthread_mutex_t* new_access_mutex;
     pthread_mutex_t* write_access_mutex;
     pthread_mutex_t* reader_registration_mutex;
-    int readers = 0;
-
+    std::atomic<int>* readers;
 } thread_args_t;
 /*
     Creates a socket while checking the return value
