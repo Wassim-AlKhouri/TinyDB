@@ -28,15 +28,22 @@ void* f(void * ptr){
   thread_args_t* args = (thread_args_t*) ptr;
   char query[1024];
   char result[1024];
-  printf("%i\n", args->socket);
+  printf("thread %i\n", args->socket);
   size_t test = 1;
+  char c;
+  int i=0;
   while(test > 0){
-    test = read(args->socket,query,1024);
-    if(test>0){
+    test = recv(args->socket,&c,sizeof(char),0);
+    query[i]=c;
+    i++;
+    if(c == '\0'){
+      i=0;
+      query[strlen(query)] = '\0';
+      printf("query:%s\n",query);
       int type = parse(query);
+      printf("type:%i\n",type);
       switch (type){
       case 0: //writer
-      
         pthread_mutex_lock(args->new_access_mutex);
         pthread_mutex_lock(args->write_access_mutex);
         pthread_mutex_unlock(args->new_access_mutex);
@@ -54,6 +61,7 @@ void* f(void * ptr){
         parse_and_execute(args->socket, args->db, query);
         pthread_mutex_lock(args->reader_registration_mutex);
         args->socket,args->readers->fetch_sub(1);
+        printf("readers:%i\n",args->readers->load());
         if (args->readers == 0){pthread_mutex_unlock(args->write_access_mutex);}
         pthread_mutex_unlock(args->reader_registration_mutex);
         break;
@@ -62,6 +70,8 @@ void* f(void * ptr){
         query_fail_bad_query_type(args->socket);
         break;
       }
+      memset(query,'\0',strlen(query));
+      c='K';
     }
   };
   if (test == 0){
@@ -108,7 +118,6 @@ int main(int argc, char const* argv[]) {
   pthread_mutex_t new_access_mutex = PTHREAD_MUTEX_INITIALIZER;
   pthread_mutex_t write_access_mutex = PTHREAD_MUTEX_INITIALIZER;
   pthread_mutex_t reader_registration_mutex = PTHREAD_MUTEX_INITIALIZER;
-  //int* readers = new int[1];
   std::atomic<int> readers(0);
 
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -126,7 +135,7 @@ int main(int argc, char const* argv[]) {
     int new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
     printf("client %i connecté\n",new_socket);
     pthread_t new_thread;
-    thread_args_t *args = new thread_args_t;
+    thread_args_t *args = new thread_args_t[1];
     args->socket = new_socket;
     args->db = db;
     args->new_access_mutex = &new_access_mutex;
