@@ -34,18 +34,17 @@ int main(void) {
   char buffer[1024];
   
   int longueur, i, ret;
-
+   printf(">");
   while (fgets(buffer, 1024, stdin) != NULL) {
-      //test = recv(sock, &null, sizeof(char),MSG_PEEK) ;
-      //buffer[strlen(buffer)]='\0';
-      longueur = strlen(buffer) + 1;
+      buffer[strlen(buffer)] = '\0';
+      longueur = strlen(buffer)+1;
       printf("Envoi...\n");
       write(sock, buffer, longueur);
       char c;
       int i=0;
-      //char buff[1024];
       size_t test = 1; 
-      while(test = recv(sock,&c,sizeof(char),0) > 0 && c != '\0'){
+      while(test > 0 && c != '\0'){
+         test = read(sock,&c,sizeof(char));
          printf("%c",c);
          i++;
       }
@@ -54,7 +53,10 @@ int main(void) {
          exit(0);
       }
       else if(test < 0){perror("[-]Error while reading in the socket.");} 
-      printf("finfi\n\n");
+      memset(buffer,'\0',strlen(buffer));
+      c='A';
+      printf("finfi\n");
+      printf(">");
    }
   close(sock);
   return 0;

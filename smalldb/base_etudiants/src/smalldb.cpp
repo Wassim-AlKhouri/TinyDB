@@ -28,20 +28,18 @@ void* f(void * ptr){
   thread_args_t* args = (thread_args_t*) ptr;
   char query[1024];
   char result[1024];
-  printf("thread %i\n", args->socket);
   size_t test = 1;
   char c;
   int i=0;
   while(test > 0){
-    test = recv(args->socket,&c,sizeof(char),0);
-    query[i]=c;
+    test = read(args->socket,&c,sizeof(char));
+    query[i]=c; // a augmanter la taille
     i++;
     if(c == '\0'){
       i=0;
       query[strlen(query)] = '\0';
-      printf("query:%s\n",query);
       int type = parse(query);
-      printf("type:%i\n",type);
+      printf("type = %i\n",type);
       switch (type){
       case 0: //writer
         pthread_mutex_lock(args->new_access_mutex);
@@ -52,18 +50,27 @@ void* f(void * ptr){
         break;
 
       case 1: //reader
+        //printf("ICI1\n");
         pthread_mutex_lock(args->new_access_mutex);
+        //printf("ICI2\n");
         pthread_mutex_lock(args->reader_registration_mutex);
+        //printf("ICI3\n");
         if (args->socket,args->readers->load() == 0){pthread_mutex_lock(args->write_access_mutex);}
         args->socket,args->readers->fetch_add(1);
+        //printf("ICI4\n");
         pthread_mutex_unlock(args->new_access_mutex);
+        //printf("ICI5\n");
         pthread_mutex_unlock(args->reader_registration_mutex);
+        //printf("ICI6\n");
         parse_and_execute(args->socket, args->db, query);
+        //printf("ICI7\n");
         pthread_mutex_lock(args->reader_registration_mutex);
+        //printf("ICI8\n");
         args->socket,args->readers->fetch_sub(1);
-        printf("readers:%i\n",args->readers->load());
-        if (args->readers == 0){pthread_mutex_unlock(args->write_access_mutex);}
+        if (args->socket,args->readers->load() == 0){pthread_mutex_unlock(args->write_access_mutex);}
+        //printf("ICI9\n");
         pthread_mutex_unlock(args->reader_registration_mutex);
+        //printf("ICI10\n");
         break;
       
       case -1:
@@ -71,7 +78,7 @@ void* f(void * ptr){
         break;
       }
       memset(query,'\0',strlen(query));
-      c='K';
+      c='A';
     }
   };
   if (test == 0){
