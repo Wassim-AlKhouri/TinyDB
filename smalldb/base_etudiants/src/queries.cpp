@@ -178,22 +178,31 @@ int parse(const char* const query) {
 // query_fail_* ///////////////////////////////////////////////////////////////
 
 void query_fail_bad_query_type(int fout) {
-printf("Bad Query\n");
+char end[] = "Querry Error : Bad Query Type\n";
+write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
 
 void query_fail_bad_format(int fout, const char * const query_type) {
 printf("Bad Format\n");
+char end[] = "Querry Error : Bad Format\n";
+write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
 
 void query_fail_too_long(int fout, const char * const query_type) {
 printf("Too Long,%s\n",query_type);
+char end[] = "Querry Error : Bad Query\n";
+write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
 
 void query_fail_bad_filter(int fout, const char* const field, const char* const filter) {
 printf("Bad Filter\n");
+char end[] = "Querry Error : Bad Filter\n";
+write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
 
 void query_fail_bad_update(int fout, const char* const field, const char* const filter) {
 printf("Bad Update\n");
+char end[] = "Querry Error : Bad Update\n";
+write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
 
