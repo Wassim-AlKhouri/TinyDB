@@ -42,17 +42,17 @@ int main(void) {
       write(sock, buffer, longueur);
       char c;
       int i=0;
-      size_t test = 1; 
-      while(test > 0 && c != '\0'){
-         test = read(sock,&c,sizeof(char));
+      size_t test = read(sock,&c,sizeof(char));
+      while( c != '\0' && test > 0){
          printf("%c",c);
          i++;
+         test = read(sock,&c,sizeof(char));
       }
       if (test == 0){
          printf("Server has disconnected\n");
          exit(0);
       }
-      else if(test < 0){perror("[-]Error while reading in the socket.");} 
+      else if(test < (size_t)0){perror("[-]Error while reading in the socket.");} 
       memset(buffer,'\0',strlen(buffer));
       c='A';
       printf("finfi\n");
