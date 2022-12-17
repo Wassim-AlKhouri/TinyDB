@@ -42,54 +42,31 @@ void reader(thread_args_t* args,char*query){
   pthread_mutex_unlock(args->reader_registration_mutex);
 }
 
-void* client_thread(void * ptr){
-  thread_args_t* args = (thread_args_t*) ptr;
+void do_query(char* query, thread_args_t* args, char* c){
+  queries.fetch_add(1);
+  query[strlen(query)] = '\0';
+  int type = parse(query);
+  switch (type){
+  case 0: 
+    //writer ("delete", "update" and "insert")
+    writer(args,query);
+    break;
+  case 1: 
+    //reader ("select")
+    reader(args,query);
+    break;
+  case -1:
+    // query_type != {"delete","update","insert","select"}
+    query_fail_bad_query_type(args->socket);
+    break;
+  }
+  // reset variables
+  memset(query,'\0',strlen(query));
+  *c='A';
+  queries.fetch_sub(1);
+}
 
-  // Add this client socket to the list of sockets
-  pthread_mutex_lock(args->sockets_mutex);
-  sockets.push_back(args->socket);
-  pthread_mutex_unlock(args->sockets_mutex);
-  
-  char query[1024];
-  size_t test = 1;
-  char c;
-  int i=0;
-  while(test > 0 && end.load() == 0){
-    if(run.load() == 1){
-      test = read(args->socket,&c,sizeof(char));
-      query[i]=c;
-      i++;
-      if(c == '\0'){
-        queries.fetch_add(1);
-        i=0;
-        query[strlen(query)] = '\0';
-        int type = parse(query);
-        switch (type){
-        case 0: 
-          //writer ("delete", "update" and "insert")
-          writer(args,query);
-          break;
-
-        case 1: 
-          //reader ("select")
-          reader(args,query);
-          break;
-        
-        case -1:
-          // query_type != {"delete","update","insert","select"}
-          query_fail_bad_query_type(args->socket);
-          break;
-        }
-        // reset variables
-        memset(query,'\0',strlen(query));
-        c='A';
-        queries.fetch_sub(1);
-      }
-    }else{
-      // When SIGUSR1 is recieved by the main thread then stop recieving new queries
-      sleep(1);
-    }
-  };
+void close_thread(thread_args_t* args, int test){
   if(end.load() == 1){
     // SIGINT recieved by the main thread
     printf("Closing connection to client %i\n",args->socket);
@@ -104,29 +81,97 @@ void* client_thread(void * ptr){
     printf("Closing thread for connection %i\n",args->socket);
     close(args->socket);
   }
-
-  // Liberate used memory and close socket before exiting
   pthread_mutex_lock(args->sockets_mutex);
   auto new_end = std::remove(sockets.begin(),sockets.end(),args->socket);
   sockets.erase(new_end,sockets.end());
   pthread_mutex_unlock(args->sockets_mutex);
   delete(args);
+  return;
+}
+
+void* client_thread(void * ptr){
+  thread_args_t* args = (thread_args_t*) ptr;
+
+  // Add this client socket to the list of sockets
+  pthread_mutex_lock(args->sockets_mutex);
+  sockets.push_back(args->socket);
+  pthread_mutex_unlock(args->sockets_mutex);
+  
+  char query[1024];
+  int test = 1;
+  char c;
+  int i=0;
+  while(test > 0 && end.load() == 0){
+    if(run.load() == 1){
+      test = read(args->socket,&c,sizeof(char));
+      query[i]=c;
+      i++;
+      if(c == '\0'){
+        i=0;
+        do_query(query,args,&c);
+      }
+    }else{
+      // When SIGUSR1 is recieved by the main thread then stop recieving new queries
+      sleep(1);
+    }
+  };
+  close_thread(args,test);
   return NULL;
 }
 
-void server(database_t* db){
-  // Set up signal handler
+void setup_signal_handler(){
   struct sigaction action;
   action.sa_handler = handler;
   sigemptyset(&action.sa_mask);
   action.sa_flags =0;
   sigaction(SIGUSR1,&action,NULL);
   sigaction(SIGINT,&action,NULL);
-  // Set up masks
+}
+
+sigset_t create_mask(){
   sigset_t mask;
   sigemptyset(&mask);
   sigaddset(&mask,SIGUSR1);
   sigaddset(&mask,SIGINT);
+  return mask;
+}
+
+thread_args_t* new_args(int s, pthread_mutex_t* nac,pthread_mutex_t* wam,pthread_mutex_t* rrm,pthread_mutex_t* sm, std::atomic<int>* r){
+  thread_args_t *args = new thread_args_t[1];
+  *args={
+    .socket = s,
+    .db = db,
+    .new_access_mutex = nac,
+    .write_access_mutex = wam,
+    .reader_registration_mutex = rrm,
+    .sockets_mutex = sm,
+    .readers = r
+  };
+  return args;
+}
+
+void close_server(int server_fd, pthread_mutex_t sockets_mutex){
+  close(server_fd);
+  printf("Waiting for all queries to end ...\n");
+  while(queries.load() > 0){sleep(1);}
+  printf("Waiting for the clients to disconnect...\n");
+  pthread_mutex_lock(&sockets_mutex);
+  for(int thread_socket : sockets){close(thread_socket);}
+  pthread_mutex_unlock(&sockets_mutex);
+  bool empty=false;
+  while(!empty){
+    pthread_mutex_lock(&sockets_mutex);
+    empty = sockets.empty();
+    pthread_mutex_unlock(&sockets_mutex);
+    if(!empty){sleep(1);}
+  }
+}
+
+void server(database_t* db){
+  // Set up signal handler
+  setup_signal_handler();
+  // Set up masks
+  sigset_t mask = create_mask();
   // Creat the four mutex needed and readers
   pthread_mutex_t new_access_mutex = PTHREAD_MUTEX_INITIALIZER;
   pthread_mutex_t write_access_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -145,6 +190,7 @@ void server(database_t* db){
   safe_bind(server_fd, (struct sockaddr *)&address, sizeof(address));
   safe_listen(server_fd, 3);
   size_t addrlen = sizeof(address);
+
   while(end.load() == 0){
     int new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
     if(new_socket<0){
@@ -156,34 +202,12 @@ void server(database_t* db){
     printf("client %i connecté\n",new_socket);
     pthread_t new_thread;
     // Creat the arguments to pass to the thread
-    thread_args_t *args = new thread_args_t[1];
-    *args={
-    .socket = new_socket,
-    .db = db,
-    .new_access_mutex = &new_access_mutex,
-    .write_access_mutex = &write_access_mutex,
-    .reader_registration_mutex = &reader_registration_mutex,
-    .sockets_mutex = &sockets_mutex,
-    .readers = &readers
-    };
+    thread_args_t* args = new_args(new_socket,&new_access_mutex,&write_access_mutex,&reader_registration_mutex,&sockets_mutex,&readers);
     sigprocmask(SIG_BLOCK,&mask,NULL);  // Block signal
     pthread_create(&new_thread,NULL,client_thread,args);  // Create thread
     sigprocmask(SIG_UNBLOCK,&mask,NULL); // Unblock signal
   }
-  close(server_fd);
-  printf("Waiting for all queries to end ...\n");
-  while(queries.load() > 0){sleep(1);}
-  printf("Waiting for the clients to disconnect...\n");
-  pthread_mutex_lock(&sockets_mutex);
-  for(int thread_socket : sockets){close(thread_socket);}
-  pthread_mutex_unlock(&sockets_mutex);
-  bool empty=false;
-  while(!empty){
-    pthread_mutex_lock(&sockets_mutex);
-    empty = sockets.empty();
-    pthread_mutex_unlock(&sockets_mutex);
-    if(!empty){sleep(1);}
-  }
+  close_server(server_fd,sockets_mutex);
 }
 
 int main(int argc, char const* argv[]) {
