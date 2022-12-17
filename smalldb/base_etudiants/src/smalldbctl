@@ -1,0 +1,18 @@
+#!/bin/bash
+
+USAGE="smalldbctl list|sync|stop"
+
+SERVER=$(pidof smalldb)
+
+# Lists IP of clients 
+if [[ "$1" == "list" ]]; then
+   ./ctllist
+# Sends a SIGUSR1 to server to save the DB
+elif [[ "$1" == "sync" ]]; then
+   kill -s SIGUSR1 $SERVER
+# Stops the DB by sending a SIGINT
+elif [[ "$1" == "stop" ]]; then
+   kill -s SIGINT $SERVER
+else
+   echo "$USAGE"
+fi

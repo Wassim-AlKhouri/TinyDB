@@ -1,0 +1,10 @@
+#!/bin/bash
+# Get a list of established connections on the server
+established_connections=$(ss --no-header -Ontp4 'sport = :28772'| grep 'smalldb')
+
+# Use awk to extract the IP addresses of the clients from the connection information
+ip_addresses=$(echo "$established_connections" | awk '{print $5}' | cut -d ':' -f1)
+
+# Print the IP addresses of the clients
+echo "IP addresses of clients:"
+echo "$ip_addresses"

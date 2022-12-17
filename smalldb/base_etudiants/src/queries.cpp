@@ -17,19 +17,18 @@ void execute_select(int fout, database_t* const db, const char* const field,
       char buffer[1024];
       i++;
       student_to_str(buffer,&s,1024),
-      write(fout,buffer,strlen(buffer));
-      write(fout,"\n",sizeof(char));
+      qsafe_write(fout,buffer,strlen(buffer));
+      qsafe_write(fout,"\n",sizeof(char));
       memset(buffer,'\0',strlen(buffer));
     }
   }
-  char end[50] = "(X) student(s) selected \n\0";
-  end[1] = i +  '0';
+  char end[50] = "X student(s) selected\n\0";
+  end[0] = i +  '0';
   write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
 
 void execute_update(int fout, database_t* const db, const char* const ffield, const char* const fvalue, const char* const efield, const char* const evalue) {
   std::function<bool(const student_t&)> predicate = get_filter(ffield, fvalue);
-  printf("ok \n");
   if (!predicate) {
     query_fail_bad_filter(fout, ffield, fvalue);
     return;
@@ -46,16 +45,21 @@ void execute_update(int fout, database_t* const db, const char* const ffield, co
       i++;
     }
   }
-  char end[50] = "(X) student(s) updated \n\0";
-  end[1] = i +  '0';
-  write(fout,&end,(strlen(end)+1)*sizeof(char));
+  char end[50] = "X student(s) updated\n\0";
+  end[0] = i +  '0';
+  qsafe_write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
 
 void execute_insert(int fout, database_t* const db, const char* const fname,
                     const char* const lname, const unsigned id, const char* const section,
                     const tm birthdate) {
+  for(student_t& s: db->data){
+    if(id == s.id){
+      query_fail_student_exists(fout);
+      return;
+      }
+  }
   db->data.emplace_back();
-
   student_t *s = &db->data.back();
   s->id = id;
   snprintf(s->fname, sizeof(s->fname), "%s", fname);
@@ -64,10 +68,9 @@ void execute_insert(int fout, database_t* const db, const char* const fname,
   s->birthdate = birthdate;
   char buffer[1024];
   student_to_str(buffer,s,1024);
-  buffer[strlen(buffer)]='\n';
-  buffer[strlen(buffer)+1]='\0';
-  write(fout,buffer,(strlen(buffer)+2)*sizeof(char));
-  //write(fout,"\n \0",(strlen(buffer)+1)*sizeof(char));
+  qsafe_write(fout,buffer,(strlen(buffer))*sizeof(char));
+  write(fout,"\n\0",2*sizeof(char));
+  memset(buffer,'\0',strlen(buffer));
 }
 
 void execute_delete(int fout, database_t* const db, const char* const field,
@@ -82,9 +85,9 @@ void execute_delete(int fout, database_t* const db, const char* const field,
   db->data.erase(new_end, db->data.end());
   int new_length = db->data.size();
   int deleted_students = length - new_length;
-  char end[50] = "(X) student(s) deleted \n \0";
-  end[1] = deleted_students +  '0';
-  write(fout,&end,(strlen(end)+1)*sizeof(char));
+  char end[50] = "X deleted student(s)\n\0";
+  end[0] = deleted_students +  '0';
+  qsafe_write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
 
 // parse_and_execute_* ////////////////////////////////////////////////////////
@@ -95,8 +98,6 @@ void parse_and_execute_select(int fout, database_t* db, const char* const query)
   if (sscanf(query, "select %31[^=]=%63s%n", ffield, fvalue, &counter) != 2) {
     query_fail_bad_format(fout, "select");
   } else if (static_cast<unsigned>(counter+1) < strlen(query)) {
-    printf("%i\n", counter);
-    printf("%li\n",strlen(query));
     query_fail_too_long(fout, "select");
   } else {
     execute_select(fout, db, ffield, fvalue);
@@ -137,7 +138,6 @@ void parse_and_execute_delete(int fout, database_t* db, const char* const query)
   if (sscanf(query, "delete %31[^=]=%63s%n", ffield, fvalue, &counter) != 2) {
     query_fail_bad_format(fout, "delete");
   } else if (static_cast<unsigned>(counter+1) < strlen(query) ) {
-    printf("%s\n", query);
     query_fail_too_long(fout, "delete");
   } else {
     execute_delete(fout, db, ffield, fvalue);
@@ -154,7 +154,6 @@ void parse_and_execute(int fout, database_t* db, const char* const query) {
   } else if (strncmp("delete", query, sizeof("delete")-1) == 0) {
     parse_and_execute_delete(fout, db, query);
   } else {
-    printf("%s\n", query);
     query_fail_bad_query_type(fout);
   }
 }
@@ -178,31 +177,55 @@ int parse(const char* const query) {
 // query_fail_* ///////////////////////////////////////////////////////////////
 
 void query_fail_bad_query_type(int fout) {
-char end[] = "Querry Error : Bad Query Type\n";
-write(fout,&end,(strlen(end)+1)*sizeof(char));
+char end[] = "Unknown query type\n";
+qsafe_write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
 
 void query_fail_bad_format(int fout, const char * const query_type) {
-printf("Bad Format\n");
-char end[] = "Querry Error : Bad Format\n";
-write(fout,&end,(strlen(end)+1)*sizeof(char));
+//printf("Bad Format\n");
+char end[] = "Syntax error in ";
+qsafe_write(fout,end,(strlen(end))*sizeof(char));
+qsafe_write(fout,query_type,(strlen(query_type))*sizeof(char));
+qsafe_write(fout,"\n\0",2*sizeof(char));
 }
 
 void query_fail_too_long(int fout, const char * const query_type) {
-printf("Too Long,%s\n",query_type);
-char end[] = "Querry Error : Bad Query\n";
-write(fout,&end,(strlen(end)+1)*sizeof(char));
+//printf("Too Long,%s\n",query_type);
+char end[] = "Syntax error in ";
+qsafe_write(fout,end,(strlen(end))*sizeof(char));
+qsafe_write(fout,query_type,(strlen(query_type))*sizeof(char));
+qsafe_write(fout,"\n\0",2*sizeof(char));
 }
 
 void query_fail_bad_filter(int fout, const char* const field, const char* const filter) {
-printf("Bad Filter\n");
-char end[] = "Querry Error : Bad Filter\n";
-write(fout,&end,(strlen(end)+1)*sizeof(char));
+//printf("Bad Filter\n");
+qsafe_write(fout,field,(strlen(field))*sizeof(char));
+qsafe_write(fout,"=",sizeof(char));
+qsafe_write(fout,filter,(strlen(filter))*sizeof(char));
+char end[] = " is not a valid filter\n";
+qsafe_write(fout,&end,(strlen(end)+1)*sizeof(char));
 }
 
 void query_fail_bad_update(int fout, const char* const field, const char* const filter) {
-printf("Bad Update\n");
-char end[] = "Querry Error : Bad Update\n";
-write(fout,&end,(strlen(end)+1)*sizeof(char));
+//printf("Bad Update\n");
+char end[] = "You cannot apply ";
+qsafe_write(fout,&end,(strlen(end))*sizeof(char));
+qsafe_write(fout,field,(strlen(field))*sizeof(char));
+qsafe_write(fout,"=",sizeof(char));
+qsafe_write(fout,filter,(strlen(filter))*sizeof(char));
+qsafe_write(fout,"\n\0",2*sizeof(char));
 }
 
+void query_fail_student_exists(int fout){
+  char end[] = "Student already exists\n";
+  qsafe_write(fout,&end,(strlen(end)+1)*sizeof(char));
+}
+
+size_t qsafe_write(int fd, const void* buffer, size_t nbytes){
+    ssize_t bytes_written = write(fd, buffer, nbytes);
+    if (bytes_written < 0) {
+      perror("Write error");
+      exit(1);
+    }
+    return (size_t)bytes_written;
+}

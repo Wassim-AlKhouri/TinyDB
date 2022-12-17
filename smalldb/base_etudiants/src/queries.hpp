@@ -50,4 +50,10 @@ void query_fail_bad_filter(int fout, const char* const field, const char* const 
 
 void query_fail_bad_update(int fout, const char* const field, const char* const filter);
 
+void query_fail_student_exists(int fout);
+/*
+    Checks the return value of write
+*/
+size_t qsafe_write(int fd, const void* buffer, size_t nbytes);
+
 #endif
