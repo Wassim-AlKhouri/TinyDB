@@ -3,8 +3,8 @@
 static volatile std::atomic<int> run(1);
 static volatile std::atomic<int> end(0);
 static volatile std::atomic<int> queries(0);
-static database_t* db = new database_t;
 std::vector<int> sockets;
+static database_t* db = new database_t;
 
 
 void handler(int sig){
@@ -37,7 +37,7 @@ void reader(thread_args_t* args,char*query){
   pthread_mutex_unlock(args->reader_registration_mutex);
   parse_and_execute(args->socket, args->db, query);
   pthread_mutex_lock(args->reader_registration_mutex);
-  args->socket,args->readers->fetch_sub(1);
+  args->readers->fetch_sub(1);
   if (args->socket,args->readers->load() == 0){pthread_mutex_unlock(args->write_access_mutex);}
   pthread_mutex_unlock(args->reader_registration_mutex);
 }
@@ -96,17 +96,16 @@ void* client_thread(void * ptr){
   }else if (test == 0){
     // Client disconnect
     printf("Client %i disconnected (normal). Closing connection and thread\n",args->socket);
-    //close(args->socket);
+    close(args->socket);
   }else{
     // Error while reading -> lost connection to client
     printf("Lost connection to client %i\n",args->socket);
     printf("Closing connection %i\n",args->socket);
     printf("Closing thread for connection %i\n",args->socket);
-    //close(args->socket);
+    close(args->socket);
   }
 
   // Liberate used memory and close socket before exiting
-  close(args->socket);
   pthread_mutex_lock(args->sockets_mutex);
   auto new_end = std::remove(sockets.begin(),sockets.end(),args->socket);
   sockets.erase(new_end,sockets.end());
@@ -115,15 +114,8 @@ void* client_thread(void * ptr){
   return NULL;
 }
 
-
-int main(int argc, char const* argv[]) {
-  // Check usage
-  if(argc != 2){printf("Wrong usage.\ntry smalldb [<path_to_the_database>]\n");exit(1);}
-  const char* path = argv[1];
-  // Load database
-  //database_t* db = new database_t;
-  db_load(db,path);
-  // Set up signal handler 
+void server(database_t* db){
+  // Set up signal handler
   struct sigaction action;
   action.sa_handler = handler;
   sigemptyset(&action.sa_mask);
@@ -156,14 +148,14 @@ int main(int argc, char const* argv[]) {
   while(end.load() == 0){
     int new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
     if(new_socket<0){
-      // We ignore the error recieved EINTR recieved when accept is 
+      // We ignore the error recieved EINTR recieved when accept is
       // stopped by a signal
       if(errno == EINTR){continue;}
       else{perror("Accept error");exit(1);}
     }
     printf("client %i connecté\n",new_socket);
     pthread_t new_thread;
-    // Creat the arguments to pass to the thread 
+    // Creat the arguments to pass to the thread
     thread_args_t *args = new thread_args_t[1];
     *args={
     .socket = new_socket,
@@ -182,9 +174,9 @@ int main(int argc, char const* argv[]) {
   printf("Waiting for all queries to end ...\n");
   while(queries.load() > 0){sleep(1);}
   printf("Waiting for the clients to disconnect...\n");
-  //pthread_mutex_lock(&sockets_mutex);
-  //for(int thread_socket : sockets){close(thread_socket);}
-  //pthread_mutex_unlock(&sockets_mutex);
+  pthread_mutex_lock(&sockets_mutex);
+  for(int thread_socket : sockets){close(thread_socket);}
+  pthread_mutex_unlock(&sockets_mutex);
   bool empty=false;
   while(!empty){
     pthread_mutex_lock(&sockets_mutex);
@@ -192,6 +184,15 @@ int main(int argc, char const* argv[]) {
     pthread_mutex_unlock(&sockets_mutex);
     if(!empty){sleep(1);}
   }
+}
+
+int main(int argc, char const* argv[]) {
+  // Check usage
+  if(argc != 2){printf("Wrong usage.\ntry smalldb [<path_to_the_database>]\n");exit(1);}
+  const char* path = argv[1];
+  // Load database
+  db_load(db,path);
+  server(db);
   printf("Saving changes ...\n");
   db_save(db);
   delete(db);

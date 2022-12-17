@@ -32,4 +32,4 @@ void reader(thread_args_t* args,char*query);
 /*
     Launches the server
 */
-void server(database_t* db, sigset_t mask);
+void server(database_t* db);
